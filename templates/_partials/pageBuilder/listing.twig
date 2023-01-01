@@ -1,0 +1,115 @@
+{#
+==================================================
+    Listing (listing)
+    Variable:
+        - Block (Block)
+
+    Fields:
+        Content:
+        	- Heading (heading)
+        	- Sub Heading (subHeading)
+            - Text (text)
+            - Buttons (buttons) [Neo]
+                - Button (button)
+                - Icon (icon)
+                - Button Type (buttonType)
+                - Color (color)
+            - Childs:
+            	- Blogs (blogs)
+            	- Events (events)
+            	- FAQs (faqs)
+            	- Meetings (meetings)
+            	- Resources (resources)
+            	- Team (team)
+
+        Settings:
+        	- Background Color (backgroundColor)
+            - Text Alignment (textAlignment)
+            - Heading Size (headingSize)
+            - Heading Border? (headingBorder)
+
+        Spacing:
+        	- Margin Top (marginTop)
+        	- Margin Bottom (marginBottom)
+        	- Padding Top (paddingTop)
+        	- Padding Bottom (paddingBottom)
+==================================================
+#}
+{{ craft.app.config.general.devMode ? ('<!-- Template: ' ~ _self ~ ' -->') | raw }}
+{% import '_includes/macros' as render %}
+
+{% set child = block.children.one() %}
+{% set section = entry.section.handle|default(null) %}
+{% set headingSize = block.headingSize.value|default('h2') %}
+{% set headingAlignment = block.textAlignment.value|default('center') %}
+{% set parent = block.parent.type.handle|default(null) %}
+{% set sectionTag = parent == 'container' ? 'div' : 'section' %}
+{% set backgroundColor = render.color({
+    handle :  currentBgColor,
+    swatch : 'background'
+}) %}
+
+{# Animation #}
+{% set contentAnimation = render.setAnimation({
+    animation: block.animation,
+    animationStyle: block.contentAnimationStyle.value|default('fade-up'),
+    animationDuration: block.contentAnimationDuration.value|default(500),
+    animationOffset: block.contentAnimationOffset.value|default(null),
+    animationEasing: block.contentAnimationEasing.value|default(null)
+}) | raw %}
+
+{% set listingAnimation = render.setAnimation({
+    animation: block.animation,
+    animationStyle: block.animationStyle.value|default('fade-up'),
+    animationDuration: block.animationDuration.value|default(500),
+    animationOffset: block.animationOffset.value|default(null),
+    animationEasing: block.AnimationEasing.value|default(null)
+}) | raw %}
+
+<{{ sectionTag }} class="{{ backgroundColor }} {{ spacing.implode(' ') }}">
+	<div class="{{ child.type.handle != 'blogs' ? 'container' }}">
+		{% if (block.heading|length or block.subHeading|length) and child.type.handle != 'blogs' %}
+		<div class="{{ headingAlignment == 'center' ? 'section-title' }} {{ 'text-' ~ headingAlignment }}">
+			{% if block.heading|length %}
+			<h2 class="{{ headingSize }} {{ block.headingBorder ? 'decorated-title' }} {{ headingAlignment == 'center' ? 'decorated-center' : headingAlignment == 'end' ? 'border-right' }}" {{ contentAnimation|raw }}>
+				{{ block.heading|nl2br }}
+			</h2>
+			{% endif %}
+
+			{% if block.subHeading|length %}
+			<span class="subhead" {{ contentAnimation|raw }}>
+				{{ block.subHeading|nl2br }}
+			</span>
+			{% endif %}
+		</div>
+		{% endif %}
+
+		{% if block.text|length %}
+		<div class="post__body {{ 'text-' ~ headingAlignment }}" {{ contentAnimation|raw }}>
+			{{ render.replaceElements(block.text, {
+				'p': 'text-black'
+			}) }}
+		</div>
+		{% endif %}
+
+		{% include "_partials/pageBuilder/listing/" ~ child.type.handle with {block: child} %}
+
+		{% for button in block.buttons.all() %}
+		{% set linkIcon = not button.icon.icon|length and button.buttonType.value == 'link' ? true : false %}
+		{% if loop.first %}
+		<div class="buttons-wrapper justify-content-{{ headingAlignment }}" {{ contentAnimation|raw }}>
+		{% endif %}
+		    {{ render.createButton({
+		        button: button.button,
+		        type: button.buttonType.value|default("button"),
+		        class: '',
+		        icon: button.icon,
+		        linkIcon: linkIcon,
+		        color: button.color.label|default("Green")
+		    }) }}
+		{% if loop.last %}
+		</div>
+		{% endif %}
+		{% endfor %}
+	</div>
+</{{ sectionTag }}>

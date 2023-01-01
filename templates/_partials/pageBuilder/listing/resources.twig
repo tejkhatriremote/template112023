@@ -1,0 +1,77 @@
+{#
+==================================================
+    Resources (resources)
+    Variable:
+        - Block (Block)
+
+    Fields:
+        Content:
+        	- Related Resources (relatedResources)
+
+        Settings:
+            - Limit (limit)
+            - Pagination (pagination)
+==================================================
+#}
+{{ craft.app.config.general.devMode ? ('<!-- Template: ' ~ _self ~ ' -->') | raw }}
+{% import '_includes/macros' as render %}
+
+{% set limit = block.limit|default('12') %}
+{% set pagination = block.pagination %}
+
+{% if block.relatedResources|length %}
+	{% set resources = block.relatedResources.limit(limit) %}
+{% else %}
+	{% set resources = craft.entries.section("resources").limit(limit) %}
+{% endif %}
+
+{% if pagination %}
+	{% paginate resources as pageInfo, resources %}
+{% else %}
+	{% set resources = resources.all() %}
+{% endif %}
+
+{% set hexColor = {
+	'bg-secondary': '#3761AD',
+	'bg-danger': '#D95A32',
+} %}
+
+{% for resource in resources %}
+{% if loop.first %}
+<div class="row gy-28 mb-30 justify-content-center">
+{% endif %}
+	<div class="col-md-6 two-row-handSvg" style="--svg-color-var: {{ loop.index is odd ? hexColor['bg-secondary'] : hexColor['bg-danger'] }};" {{ listingAnimation|raw }}>
+		<div class="card res px-0">
+			{% set image = resource.image.one() %}
+			{% if image|length %}
+			<div class="res-photo">
+				{% set params = {
+					image: image,
+					alt: image.title,
+					width: image.width,
+					height: image.height
+				} %}
+				{{ render.setImage(params) }}
+			</div>
+			{% endif %}
+
+			<div class="card-body {{ loop.index is odd ? 'bg-secondary' : 'bg-danger' }}">
+			  	<h3 class="card-title">{{ resource.title }}</h3>
+
+			  	{{ render.replaceElements(resource.text, {
+					'p': 'card-text text-white',
+				}) }}
+
+			  	<a href="{{ resource.getUrl() }}" class="btn btn-link">{{ resource.title }} »</a>
+			</div>
+		  </div>
+	</div>
+{% if loop.last %}
+</div>
+{% if pagination and pageInfo and pageInfo.totalPages|default(0) > 1 %}
+<div class="md:mt-7 mt-4 text-center" {{ listingAnimation|raw }}>
+	{% include "_includes/_pagination" %}
+</div>
+{% endif %}
+{% endif %}
+{% endfor %}

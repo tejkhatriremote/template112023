@@ -1,0 +1,78 @@
+{#
+========================================
+    Heading (heading)
+
+    Variables
+        - Block (block)
+
+    Fields:
+        Content:
+            - Heading (heading)
+            - Sub Heading (subHeading)
+
+        Settings:
+        	- Background Color (backgroundColor)
+            - Heading Size (headingSize)
+            - Text Alignment (textAlignment)
+            - Heading Border? (headingBorder)
+
+        Animation Styles:
+            - Animation (animation)
+            - Content Animation Style (contentAnimationStyle)
+            - Content Animation Easing (contentAnimationEasing)
+            - Content Animation Duration (contentAnimationDuration)
+            - Content Animation Offset (contentAnimationOffset)
+
+        Spacing:
+        	- Margin Top (marginTop)
+        	- Margin Bottom (marginBottom)
+        	- Padding Top (paddingTop)
+        	- Padding Bottom (paddingBottom)
+========================================
+#}
+{{ craft.app.config.general.devMode ? ('<!-- Template: ' ~ _self ~ ' -->') | raw }}
+{% import "_includes/macros" as render %}
+
+{% set section = entry.section.handle|default(null) %}
+{% set parent = block.parent.type.handle|default(null) %}
+{% set sectionTag = (parent == 'container' or not block.heading|length) ? 'div' : 'section' %}
+
+{% set headingSize = block.headingSize.value|default('h2') %}
+{% set headingAlignment = block.textAlignment.value|default('center') %}
+{% set backgroundColor = render.color({
+    handle :  currentBgColor,
+    swatch : 'background'
+}) %}
+
+{# Animation #}
+{% set contentAnimation = render.setAnimation({
+    animation: block.animation,
+    animationStyle: block.contentAnimationStyle.value|default('fade-up'),
+    animationDuration: block.contentAnimationDuration.value|default(500),
+    animationOffset: block.contentAnimationOffset.value|default(null),
+    animationEasing: block.contentAnimationEasing.value|default(null)
+}) | raw %}
+
+{% if block.heading|length or block.subHeading|length %}
+<{{ sectionTag }} class="{{ backgroundColor }}">
+	<div class="container {{ spacing.implode(' ') }}">
+		<div class="{{ 'text-' ~ headingAlignment }} {{ section != 'pages' and section != 'home' ? 'col-lg-8 col-12 mx-auto' }}">
+			<div class="post__text">
+				<div class="{{ headingAlignment == 'center' ? 'border-center' : headingAlignment == 'end' ? 'border-right' }} {{ not block.headingBorder ? 'pb-10 position-relative' : 'decorated-title' }}">
+					{% if block.heading|length %}
+					<h2 class="mb-15 {{ headingSize }}" {{ contentAnimation|raw }}>
+						{{ block.heading|nl2br }}
+					</h2>
+					{% endif %}
+
+					{% if block.subHeading|length %}
+					<span class="subhead text-black" {{ contentAnimation|raw }}>
+						{{ block.subHeading|nl2br }}
+					</span>
+					{% endif %}
+				</div>
+			</div>
+		</div>
+	</div>
+</{{ sectionTag }}>
+{% endif %}

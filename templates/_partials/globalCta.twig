@@ -1,0 +1,30 @@
+{#
+==================================================
+    Call To Action (callToAction)
+    Variable:
+        - Block (Block)
+
+    Fields:
+        - CTA (cta) [Entries]
+==================================================
+#}
+{{ craft.app.config.general.devMode ? ('<!-- Template: ' ~ _self ~ ' -->') | raw }}
+
+{% set disableCta = entry.disableCta|default(null) %}
+{% if entry is defined and not disableCta %}
+    {% set cta = entry.callToAction.one() | default(callToAction.callToAction.one()) %}
+    {% if cta|length %}
+        {% include "_partials/blocks" with {
+            pageBuilder: cta.callToActionBuilder.level(1).all(),
+            parent: 'callToAction',
+            firstBlockSpacing: {
+                'defaultMarginTop' : 'none',
+                'defaultPaddingTop' : 'none',
+            },
+            lastBlockSpacing: {
+                'defaultMarginBottom' : 'none',
+                'defaultPaddingBottom' : 'none',
+            },
+        } %}
+    {% endif %}
+{% endif %}

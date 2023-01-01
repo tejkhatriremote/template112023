@@ -1,0 +1,115 @@
+{% set _key = craft.app.language ~ '/pages/' ~ craft.app.request.pathInfo ~ '/' ~ craft.app.request.queryStringWithoutPath ~ 'p' ~ craft.app.request.getPageNum %}
+{% import "_includes/macros" as render %}
+
+{% cache globally using key _key %}
+{% minify %}
+{% set tracking = trackingScripts.trackingScripts.all() %}
+<!DOCTYPE html>
+{% set htmlAttrs = {
+    lang: craft.app.language,
+    class:
+    [
+        craft.app.config.env in ["dev"] ? 'no-webp',
+    ]
+} %}
+<html {{ attr(htmlAttrs) }}>
+<head>
+    <!-- set the encoding of your site -->
+    <meta charset="utf-8">
+    <meta name="theme-color" content="#69a134"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- include the site stylesheets -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+
+    <link href="{{ mix('css/main.css') }}" rel="stylesheet">
+    {% block extraCss %}{% endblock %}
+
+    {#
+    =============================================
+        Inject SEO code.
+    =============================================
+    #}
+    {% block seo %}{% hook 'seo' %}{% endblock %}
+
+    {# Global Scripts (Head) #}
+    {% for item in tracking|filter(item => item.scriptType.value == "head" and (not item.addOnlyInProduction or (item.addOnlyInProduction and craft.app.config.env == "production"))) %}
+        {% if item.heading|length %}<!-- {{ item.heading|nl2br }}-->{% endif %}
+        {% for item in item.scripts %}
+            <script src="{{ item.url }}" {% if item.attributes|length %} {{ item.attributes|raw }}{% endif %} {{ item.loadingType|default(null) }}></script>
+        {% endfor %}
+        <script>{{ item.code|raw }}</script>
+        {% if item.heading|length %}<!-- END {{ item.heading|nl2br }}-->{% endif %}
+    {% endfor %}
+
+    <!-- Any Stript below that is Generated or Injected.-->
+</head>
+<body class="flex flex-wrap min-h-full h-auto text-secondary-500 font-fieldwork">
+    {# Global Scripts (Body Start) #}
+    {% for item in tracking|filter(item => item.scriptType.value == "bodyStart" and (not item.addOnlyInProduction or (item.addOnlyInProduction and craft.app.config.env == "production"))) %}
+        {% if item.heading|length %}<!-- {{ item.heading|nl2br }}-->{% endif %}
+        {% for item in item.scripts %}
+            <script src="{{ item.url }}" {% if item.attributes|length %} {{ item.attributes|raw }}{% endif %} {{ item.loadingType|default(null) }}></script>
+        {% endfor %}
+        <script>{{ item.code|raw }}</script>
+        {% if item.heading|length %}<!-- END {{ item.heading|nl2br }}-->{% endif %}
+    {% endfor %}
+
+    <div class="wrapper" id="wrapper">
+        {{ svg('@webroot/assets/icons/first5shasta-sprites.svg') }}
+        {#
+        =============================================
+            Include Header
+        =============================================
+        #}
+        {% include "_includes/header" %}
+
+        <main id="main">
+            {% block content %}{% endblock %}
+        </main>
+
+        {#
+        =============================================
+            Global CTA
+        =============================================
+        #}
+        {% include "_partials/globalCta" %}
+
+        {#
+        =============================================
+            Include Footer
+        =============================================
+        #}
+        {% include "_includes/footer" %}
+        <a class="accessibility" href="#wrapper">Back to top</a>
+    </div>
+
+    {# script #}
+    {% block extraJS %}{% endblock %}
+
+    <link rel="preload" as="font" href="https://fonts.googleapis.com/css2?family=Albert+Sans:wght@300;500;700;800&family=Bitter:ital,wght@0,500;0,700;0,800;1,400&family=Red+Hat+Display:wght@700&display=swap" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript>
+        <link href="https://fonts.googleapis.com/css2?family=Albert+Sans:wght@300;500;700;800&family=Bitter:ital,wght@0,500;0,700;0,800;1,400&family=Red+Hat+Display:wght@700&display=swap" rel="stylesheet">
+    </noscript>
+    <script src="{{ mix('js/main.js') }}" defer></script>
+
+    {# Global Scripts (Body End) #}
+    {% for item in tracking|filter(item => item.scriptType.value == "bodyEnd" and (not item.addOnlyInProduction or (item.addOnlyInProduction and craft.app.config.env == "production"))) %}
+        {% if item.heading|length %}<!-- {{ item.heading|nl2br }}-->{% endif %}
+        {% for item in item.scripts %}
+            <script src="{{ item.url }}" {% if item.attributes|length %} {{ item.attributes|raw }}{% endif %} {{ item.loadingType|default(null) }}></script>
+        {% endfor %}
+        <script>{{ item.code|raw }}</script>
+        {% if item.heading|length %}<!-- END {{ item.heading|nl2br }}-->{% endif %}
+    {% endfor %}
+    <!-- Any Stript below that is Generated or Injected.-->
+</body>
+</html>
+{% endminify %}
+{% endcache %}

@@ -1,0 +1,164 @@
+{#
+==================================================
+    Blogs (blogs)
+    Variable:
+        - Block (Block)
+
+    Fields:
+        Content:
+        	- Featured Blog (featuredBlog)
+        	- Related Blogs (relatedBlogs)
+
+        Settings:
+            - Limit (limit)
+            - Pagination (pagination)
+            - Filters (filters)
+==================================================
+#}
+{{ craft.app.config.general.devMode ? ('<!-- Template: ' ~ _self ~ ' -->') | raw }}
+{% import '_includes/macros' as render %}
+
+{% set searchQuery = craft.app.request.getParam('search') %}
+{% set limit = block.limit|default('9') %}
+{% set pagination = block.pagination %}
+
+{% if block.relatedBlogs|length %}
+	{% set blogs = block.relatedBlogs.search(searchQuery).limit(limit) %}
+{% else %}
+	{% set blogs = craft.entries.search(searchQuery).section("blogs").limit(limit) %}
+{% endif %}
+
+{% if pagination %}
+	{% paginate blogs as pageInfo, blogs %}
+{% else %}
+	{% set blogs = blogs.all() %}
+{% endif %}
+
+{% if block.showFeatured %}
+	{% if block.featuredBlog|length %}
+		{% set featuredBlog = block.featuredBlog.one() %}
+	{% else %}
+		{% set featuredBlog = craft.entries.section("blogs").one() %}
+	{% endif %}
+	<div class="decorated-block mt-0 pt-0">
+		<div class="decorated-block-inner top-pattern">
+			<div class="container">
+				<div class="post row" {{ listingAnimation|raw }}>
+					<div class="col-md-6 mb-30 mb-lg-0">
+						<div class="post__image">
+							{% set image = featuredBlog.image.one() %}
+							{% if image|length %}
+							    {% set params = {
+							        image: image,
+							        alt: image.title,
+							        width: image.width,
+							        height: image.height
+							    } %}
+							    {{ render.setImage(params) }}
+							{% endif %}
+						</div>
+					</div>
+					<div class="col-md-6">
+						<div class="post__text">
+							<h6 class="fw-normal mb-10 text-black">Featured Post</h6>
+							<div class="decorated-title">
+								<h2>
+									{{ featuredBlog.title }}
+								</h2>
+							</div>
+
+							{% set relatedAuthor = featuredBlog.relatedTeamMembers %}
+							{% if relatedAuthor|length %}
+							<div class="post__body mb-0">
+								<p class="text-black">By Post
+									{% for author in relatedAuthor.all() %}
+									{{ author.title }} {{ not loop.last ? ' , ' }}
+									{% endfor %}
+								</p>
+							</div>
+							{% endif %}
+
+							{% if featuredBlog.subHeading|length %}
+							<div class="post__body blog-list mb-2">
+								<p class="text-black">
+									{{ featuredBlog.subHeading|nl2br }}
+								</p>
+							</div>
+							{% endif %}
+							<a class="btn btn-primary mt-10" href="{{ featuredBlog.getUrl() }}">Learn More</a>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+{% endif %}
+
+{% for blog in blogs %}
+{% if loop.first %}
+<div class="container three-cards">
+	{% if block.filters %}
+	<div class="col-12 mb-34" {{ listingAnimation|raw }}>
+		<form role="search" class="search-bar">
+			<label for="search" class="form-label">
+				Search Blogs:
+			</label>
+			<input type="search" name="search" id="search" value="{{ searchQuery }}" class="form-control">
+			<button type="submit" class="btn btn-danger btn-search flex-shrink-0 ms-10"><svg width="20" height="25" fill="#fff"><use xlink:href="#magnifyglass-search"></use></svg><span class="visually-hidden">Search button</span></button>
+		</form>
+	</div>
+	{% endif %}
+	<div class="row mb-30 gy-30">
+{% endif %}
+		<div class="col-lg-4" {{ listingAnimation|raw }}>
+		    <div class="card">
+		        <a href="{{ blog.getUrl() }}">
+		            {% set image = blog.image.one() %}
+		            {% if image|length %}
+		                {% set params = {
+		                    image: image,
+		                    alt: image.title,
+		                    class: 'card-img-top',
+		                    width: image.width,
+		                    height: image.height
+		                } %}
+		                {{ render.setImage(params) }}
+		            {% endif %}
+		        </a>
+
+		        <div class="card-body">
+		            <span class="subhead">{{ blog.dateCreated|date }}</span>
+		            <h3 class="card-title">
+		                <a href="{{ blog.getUrl() }}">{{ blog.title }}</a>
+		            </h3>
+
+		            {% set relatedAuthor = blog.relatedTeamMembers %}
+		            {% if relatedAuthor|length %}
+		            <div class="post__body mb-0">
+		            	<p class="text-black">By Post
+		            		{% for author in relatedAuthor.all() %}
+		            		{{ author.title }} {{ not loop.last ? ' , ' }}
+		            		{% endfor %}
+		            	</p>
+		            </div>
+		            {% endif %}
+
+		            {% if relatedAuthor.subHeading|length %}
+		            <div class="post__body blog-list mb-2">
+		            	<p class="text-black">
+		            		{{ relatedAuthor.subHeading|nl2br|truncate(100) }}
+		            	</p>
+		            </div>
+		            {% endif %}
+		            <a class="btn btn-link" href="{{ blog.getUrl() }}">Read More »</a>
+		        </div>
+		    </div>
+		</div>
+{% if loop.last %}
+	</div>
+</div>
+	{% if pagination and pageInfo and pageInfo.totalPages|default(0) > 1 %}
+		{% include "_includes/_pagination" %}
+	{% endif %}
+{% endif %}
+{% endfor %}

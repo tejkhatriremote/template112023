@@ -1,0 +1,37 @@
+{#
+==================================================
+    Call To Action (callToAction)
+    Variable:
+        - Block (Block)
+
+    Fields:
+        - CTA (cta) [Entries]
+        - Margin Top (marginTop)
+        - Margin Bottom (marginBottom)
+        - Padding Top (paddingTop)
+        - Padding Bottom (paddingBottom)
+==================================================
+#}
+{{ craft.app.config.general.devMode ? ('<!-- Template: ' ~ _self ~ ' -->') | raw }}
+{% import '_includes/macros' as render %}
+
+{% set parent = block.parent.type.handle|default(null) %}
+{% set sectionTag = parent == 'container' ? 'div' : 'section' %}
+
+{% if block.callToAction|length %}
+{% set cta = block.callToAction.one() %}
+<{{ sectionTag }} class="{{ spacing.implode(' ') }}">
+    {% include "_partials/blocks" with {
+        pageBuilder: cta.callToActionBuilder.level(1).all(),
+        parent: block.type.handle,
+        firstBlockSpacing: {
+            'defaultMarginTop' : 'none',
+            'defaultPaddingTop' : 'none',
+        },
+        lastBlockSpacing: {
+            'defaultMarginBottom' : 'none',
+            'defaultPaddingBottom' : 'none',
+        },
+    } %}
+</{{ sectionTag }}>
+{% endif %}

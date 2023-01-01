@@ -1,0 +1,29 @@
+{#
+==================================================
+    Events (events)
+    Variable:
+        - Block (Block)
+
+    Fields:
+        Content:
+            - Related Events (relatedEvents)
+
+        Settings:
+            - Limit (limit)
+            - Pagination (pagination)
+==================================================
+#}
+{{ craft.app.config.general.devMode ? ('<!-- Template: ' ~ _self ~ ' -->') | raw }}
+{% import '_includes/macros' as render %}
+
+{% set list = block.eventLayouts.contains('list') %}
+{% set calendar = block.eventLayouts.contains('calendar') %}
+
+{% set defaultLayout = calendar and list ? 'list' : (calendar ? 'calendar' : 'list') %}
+{% set layoutParams = craft.app.request.getQueryParam("layout")|default(defaultLayout) %}
+
+{% if layoutParams == 'calendar' and layoutParams != 'list' %}
+    {% include "_partials/pageBuilder/listing/events/calendar-view" %}
+{% elseif layoutParams != 'calendar' and layoutParams == 'list' %}
+    {% include "_partials/pageBuilder/listing/events/list-view" %}
+{% endif %}

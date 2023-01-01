@@ -1,0 +1,49 @@
+{#
+==================================================
+    Container (container).
+    Variable
+        - Block (block)
+
+    Fields:
+    - Pattern? (pattern)
+    - Background Color (backgroundColor)
+    - Margin Top (marginTop)
+    - Margin Bottom (marginBottom)
+    - Padding Top (paddingTop)
+    - Padding Bottom (paddingBottom)
+
+    Children BLocks:
+    - Any top-level blocks
+==================================================
+#}
+
+{{ craft.app.config.general.devMode ? ('<!-- Template: ' ~ _self ~ ' -->') | raw }}
+{% import '_includes/macros' as render %}
+
+{% set section = entry.section.handle|default(null) %}
+{% set backgroundColor = render.color({
+    handle :  currentBgColor,
+    swatch : 'background'
+}) %}
+
+{% set topPattern = not block.pattern.contains('topPattern') ? 'top-pattern ' %}
+{% set bottomPattern = not block.pattern.contains('bottomPattern') ? 'bottom-pattern' %}
+{% set topSpacingClasses = (block.pattern.contains('topPattern') ? (spacing.marginTop ~ ' ' ~ spacing.paddingTop) : null) ~ ' ' ~ (block.pattern.contains('bottomPattern') ? (spacing.marginBottom ~ ' ' ~ spacing.paddingBottom) : null) %}
+{% set childSpacingClasses = (not block.pattern.contains('topPattern') ? (spacing.marginTop ~ ' ' ~ spacing.paddingTop) : null) ~ ' ' ~ (not block.pattern.contains('bottomPattern') ? (spacing.marginBottom ~ ' ' ~ spacing.paddingBottom) : null) %}
+
+<section class="{{ topSpacingClasses }} {{ not block.pattern.contains('topPattern') and not block.pattern.contains('bottomPattern') ? backgroundColor }}">
+    <div class="{{ topPattern }}{{ bottomPattern }} {{ childSpacingClasses }} {{ backgroundColor }} {{ backgroundColor == 'bg-gray' ? 'decorated-block-inner' }}">
+        {% include "_partials/blocks" with {
+            pageBuilder: block.children.all(),
+            parent: block.type.handle,
+            firstBlockSpacing: {
+                'defaultMarginTop' : 'none',
+                'defaultPaddingTop' : 'none',
+            },
+            lastBlockSpacing: {
+                'defaultMarginBottom' : 'none',
+                'defaultPaddingBottom' : 'none',
+            },
+        } %}
+    </div>
+</section>

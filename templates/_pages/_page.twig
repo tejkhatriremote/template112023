@@ -1,0 +1,30 @@
+{% extends '_layouts/main' %}
+
+{% block content %}
+	{{ craft.app.config.general.devMode ? ('<!-- Page: ' ~ _self ~ ' -->') | raw }}
+
+	{#
+	=============================================
+	    Include Hero
+	=============================================
+	#}
+	{% include "_partials/hero" %}
+
+	{% set section = entry.section.handle %}
+	{% if section != 'home' %}
+		{#
+		=============================================
+		    Include Breadcrumb
+		=============================================
+		#}
+	    {% include "_includes/breadcrumb" %}
+	{% endif %}
+
+	{#
+	=============================================
+	    Include page Builder
+	=============================================
+	#}
+	{% include "_partials/pageBuilder" %}
+
+{% endblock %}

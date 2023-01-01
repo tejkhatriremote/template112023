@@ -1,0 +1,13 @@
+{% set animationAttributes = {} %}
+{% if animation %}
+    {% if animationStyle|length or animationStyle.value != 'none' %}
+        {% set animationAttributes = {
+            'data-aos': animationStyle,
+            'data-aos-offset': animationOffset,
+            'data-aos-duration': animationDuration,
+            'data-aos-easing': animationEasing
+        } %}
+    {% endif %}
+{% endif %}
+
+{{ attr(animationAttributes) }}

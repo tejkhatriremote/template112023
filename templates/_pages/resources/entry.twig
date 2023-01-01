@@ -1,0 +1,85 @@
+{% extends '_layouts/main' %}
+{% import "_includes/macros" as render %}
+
+{% block content %}
+    {{ craft.app.config.general.devMode ? ('<!-- Page: ' ~ _self ~ ' -->') | raw }}
+    <section class="hero-section">
+        {% set image = entry.image.one() %}
+        {% if image|length %}
+        <div class="hero-section__bg">
+            {% set params = {
+                image: image,
+                alt: image.title,
+                width: image.width,
+                height: image.height
+            } %}
+            {{ render.setImage(params) }}
+        </div>
+        {% endif %}
+
+        <div class="container">
+            <div class="hero-section__inner">
+                <h1 class="h1 mb-30">
+                    {{ entry.title }}
+                </h1>
+
+                {{ render.replaceElements(entry.text, {
+                    'p': 'subhead'
+                }) }}
+            </div>
+        </div>
+    </section>
+    {#
+    =============================================
+        Include Breadcrumb
+    =============================================
+    #}
+    {% include "_includes/breadcrumb" %}
+
+    {#
+    =============================================
+        Include pageBuilder
+    =============================================
+    #}
+    {% include "_partials/pageBuilder" %}
+
+    {# Additional Resources #}
+    {% set additionalResources = entry.additionalResources %}
+    {% if additionalResources|length %}
+    <section class="decorated-block decorated-block-top">
+        <div class="decorated-block-inner pt-30 py-60">
+            <div class="container">
+                <div class="decorated-title">
+                    <h2>
+                        Additional Resources
+                    </h2>
+                </div>
+
+                {% for resource in additionalResources.all() %}
+                {% if loop.first %}
+                <div class="row gy-20">
+                {% endif %}
+                    <div class="col-sm-6 col-md-4 col-lg-3">
+                        <div class="resourse">
+                            {% if resource.heading|length or not resource.resource.isEmpty %}
+                            <a href="{{ resource.resource.getUrl() }}" {% if resource.resource.getTarget() and resource.resource.getType() == 'url' %}target="_blank" rel="noopener"{% endif %} {{ resource.resource.getType() == 'asset' ? 'download' }} aria-label="{{ resource.heading }}">
+                                {{ resource.heading }} {% if not resource.resource.isEmpty %}<svg width="20" height="18" fill="#3761ad"><use xlink:href="#{{ resource.resource.getType() == 'asset' ? 'res-file-lines' : 'res-arrow-up-right' }}"></use></svg>{% endif %}
+                            </a>
+                            {% endif %}
+
+                            {% if resource.text|length %}
+                            <span>
+                                {{ resource.text }}
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% if loop.last %}
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+    {% endif %}
+{% endblock %}

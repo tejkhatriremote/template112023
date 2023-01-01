@@ -1,0 +1,29 @@
+{% extends '_layouts/main' %}
+{% import "_includes/macros" as render %}
+
+{% block content %}
+    {{ craft.app.config.general.devMode ? ('<!-- Page: ' ~ _self ~ ' -->') | raw }}
+    <section class="bg-gray">
+        <div class="container py-100 text-center">
+            <h1 class="mb-30">
+                {{ entry.title }}
+            </h1>
+
+        </div>
+    </section>
+    {#
+    =============================================
+        Include Breadcrumb
+    =============================================
+    #}
+    {% include "_includes/breadcrumb" %}
+    <div class="container">
+        <div class="col-lg-8 col-12 mx-auto">
+            <div class="blog-list">
+                {{ render.replaceElements(entry.text, {
+                    'p': 'subhead'
+                }) }}
+            </div>
+        </div>
+    </div>
+{% endblock %}

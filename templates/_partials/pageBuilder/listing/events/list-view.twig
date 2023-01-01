@@ -1,0 +1,153 @@
+{% import '_includes/macros' as render %}
+
+{% set limit = block.limit|default('9') %}
+{% set pagination = block.pagination %}
+{% set pastEvents = block.allowedEventTypes.contains('pastEvents') %}
+{% set upcomingEvents = block.allowedEventTypes.contains('upcomingEvents') %}
+{% set category = craft.app.request.getQueryParam("category")|default(null) %}
+
+{# Set Limit per page #}
+{% set eventOptions = collect({
+    limit: limit
+}) %}
+
+{% if pastEvents and not upcomingEvents %}
+    {# Show only Past events #}
+    {% set eventOptions = eventOptions.merge({
+        rangeEnd: 'today'
+    }) %}
+
+{% elseif not pastEvents and upcomingEvents %}
+    {# Show only future events #}
+    {% set eventOptions = eventOptions.merge({
+        rangeStart: 'today'
+    }) %}
+{% endif %}
+
+{# Restrict list by calander #}
+{% if category|length %}
+    {% set eventOptions = eventOptions.merge({
+        calendar: category
+    }) %}
+{% endif %}
+
+{% set query = craft.calendar.events(eventOptions.toArray()).with(['image']) %}
+{% if pagination %}
+    {% paginate query as pageInfo, events %}
+{% else %}
+    {% set pageInfo = null %}
+    {% set events = query %}
+{% endif %}
+
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="events-nav mb-40"  {{ listingAnimation|raw }}>
+            <div class="row">
+                <div class="col-md-7 col-xl-5 d-flex align-items-center mb-20 mb-md-0">
+                    <strong class="events-nav-title">
+                        View:
+                    </strong>
+
+                    <ul class="nav nav-pills mb-3" id="pills-tab" role="tablist">
+                        {% if list or defaultLayout == 'list' %}
+                        <li class="nav-item" role="presentation">
+                            <a href="?layout=list" class="nav-link active py-10"><svg width="25" height="25" fill="#fff" style="font-size: 1.875rem; line-height: 1.533; margin: 0 10px 0 0;"><use xlink:href="#metting-list"></use></svg> List</a>
+                        </li>
+                        {% endif %}
+                        {% if calendar %}
+                        <li class="nav-item" role="presentation">
+                            <a href="?layout=calendar" class="nav-link py-10"><svg width="25" height="25" fill="#d95a32" style="font-size: 1.875rem; line-height: 1.533; margin: 0 10px 0 0;"><use xlink:href="#event-calender"></use></svg> Calendar</a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </div>
+
+                {% if block.filters %}
+                {% set calendars = craft.calendar.calendars({
+                    limit: 10,
+                    order: "name",
+                    sort: "asc"
+                }) %}
+                <form method="GET" action="{{ craft.app.request.absoluteUrl }}" class="filter-form col-md-5 col-xl-7 d-flex align-items-center">
+                    {{ hiddenInput('layout', 'list') }}
+                    <label for="category" class="events-nav-title">
+                        Category:
+                    </label>
+                    <select name="category" id="category" class="form-select category-filter">
+                        <option value="">All</option>
+                        {% for calendar in calendars %}
+                        <option value="{{ calendar.handle }}" {% if category == calendar.handle %} selected{% endif %}>{{ calendar.name }}</option>
+                        {% endfor %}
+                    </select>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+
+        {# List down all the events #}
+        {% for event in events %}
+            <div class="tab-content mb-40" id="pills-tabContent"  {{ listingAnimation|raw }}>
+                <div class="tab-pane fade show active" id="pills-list" role="tabpanel" tabindex="0">
+                    <div class="event card">
+                        <div class="event-img">
+                            {% set image = event.image[0] ?? null %}
+                            {% if image|length %}
+                                {% set params = {
+                                    image: image,
+                                    alt: image.title,
+                                    pictureClass: 'event-img',
+                                    class: 'img-fluid rounded',
+                                    width: image.width,
+                                    height: image.height
+                                } %}
+
+                                {{ render.setImage(params) }}
+                            {% endif %}
+                        </div>
+                        <div class="card-body">
+                            <h2 class="h3 card-title mb-0">{{ event.name }}</h2>
+
+                            <span class="text-secondary fw-bold">
+                                Category: {{ event.calendar.name }}
+                            </span>
+
+                            <p class="subhead">
+                                {{ event.startDate.format('l, F j, Y') }}
+
+                                {% if event.allDay %}
+                                    (All day)
+                                {% else %}
+                                    at {{ event.startDate.format("g:ia") }} -
+                                    {% if event.multiDay %}
+                                        <br />{{ event.endDate.format("l, F j, Y \\a\\t g:ia") }}
+                                    {% else %}
+                                        {{ event.endDate.format("g:ia") }}
+                                    {% endif %}
+                                {% endif %}
+                            </p>
+
+                            {% if event.text|length %}
+                                {{ render.replaceElements(event.text, {
+                                    'p': 'card-text'
+                                }) }}
+                            {% endif %}
+
+                            <a href="{{ event.getUrl() }}" class="btn btn-primary">Learn More</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="alert alert-danger" role="alert" {{ listingAnimation|raw }}>
+                <p class="lead mb-0">
+                    Sorry, no events were found for your search criteria.
+                </p>
+            </div>
+        {% endfor %}
+
+        {# List pagination if allowed #}
+        {% if pagination and pageInfo.totalPages|default(0) > 1 %}
+            {% include "_includes/_pagination" %}
+        {% endif %}
+    </div>
+</div>

@@ -1,0 +1,34 @@
+{% set colors = {
+    'button' : {
+        "White"	: "btn btn-primary btn-primary-light",
+        "Green"  : "btn btn-primary",
+        "Blue"  : "btn btn-secondary",
+        "Orange"  : "btn btn-danger",
+    },
+    'link' : {
+        "White" : "btn btn-link btn-link-light",
+        "Green"  : "btn btn-link",
+        "Blue"  : "fs-6 text-dark",
+        "Orange"  : "fs-6 text-orange",
+    }
+} %}
+
+{% set type = type ?? "button" %}
+{% set color = color ?? "green" %}
+{% set class = class ~ ' ' ~ colors[type][color] %}
+
+{% if not button.isEmpty() %}
+<a href="{{ button.getUrl() }}" class="{{ class }}" {% if button.getTarget() %}target="_blank" rel="noopener"{% endif %}>
+    {{ button.getText() | default(button.getUrl()) }}{% if linkIcon %} <span class="link-icon">»</span>{% endif %}
+    {% if button.getText()|lower in ["read more", "see more", "learn more", "click here"] %}
+        <span class="visually-hidden"> About This </span>
+    {% endif %}
+    {% if icon %}
+        {{ svg(icon.path)|attr({
+            'class': 'ms-2',
+            'width': '20',
+            'height': '20'
+        }) }}
+    {% endif %}
+</a>
+{% endif %}

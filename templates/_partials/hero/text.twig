@@ -1,0 +1,96 @@
+{#
+========================================
+    Text (text)
+
+    Variables
+        - Block (block)
+
+    Child:
+        Fields:
+            Content:
+                - Heading (heading)
+                - Sub Heading (subHeading)
+                - Buttons (buttons) [Neo]
+                    - Button (button)
+                    - Icon (icon)
+                    - Button Type (buttonType)
+                    - Color (color)
+
+            Animation Styles:
+                - Animation (animation)
+                - Content Animation Style (contentAnimationStyle)
+                - Content Animation Easing (contentAnimationEasing)
+                - Content Animation Duration (contentAnimationDuration)
+                - Content Animation Offset (contentAnimationOffset)
+
+            Settings:
+                - Heading Size (headingSize)
+                - Text Alignment (textAlignment)
+                - Overlay (overlay)
+========================================
+#}
+{{ craft.app.config.general.devMode ? ('<!-- Template: ' ~ _self ~ ' -->') | raw }}
+{% import "_includes/macros" as render %}
+
+{% set color = {
+    'White':{
+        'text': 'text-black',
+        'link': 'btn btn-secondary'
+    },
+    'Gray':{
+        'text': 'text-black',
+        'link': ''
+    }
+} %}
+
+{% set headingSize = block.headingSize.value|default('h1') %}
+{% set headingAlignment = 'text-' ~ block.textAlignment.value|default('left') %}
+{% set backgroundColor = render.color({
+    handle :  currentBgColor,
+    swatch : 'background'
+}) %}
+
+{% set textColor = color[currentBgColor] %}
+
+{# Animation #}
+{% set contentAnimation = render.setAnimation({
+    animation: block.animation,
+    animationStyle: block.contentAnimationStyle.value|default('fade-up'),
+    animationDuration: block.contentAnimationDuration.value|default(500),
+    animationOffset: block.contentAnimationOffset.value|default(null),
+    animationEasing: block.contentAnimationEasing.value|default(null)
+}) | raw %}
+
+<section class="{{ backgroundColor }}">
+    {% if block.heading|length or block.subHeading|length or block.buttons|length %}
+    <div class="container py-100 {{ headingAlignment }}">
+        {% if block.heading|length %}
+        <h1 class="mb-30 {{ textColor.text }} {{ headingSize }}" {{ contentAnimation|raw }}>
+            {{ block.heading|nl2br }}
+        </h1>
+        {% endif %}
+
+        {% if block.subHeading|length %}
+        <span class="subhead {{ textColor.text }}" {{ contentAnimation|raw }}>
+            {{ block.subHeading|nl2br }}
+        </span>
+        {% endif %}
+
+        <div {{ contentAnimation|raw }}>
+            {% for button in block.buttons.all() %}
+            {% set class = loop.last and not loop.first ? ' ms-10 ' %}
+            {% set linkIcon = not button.icon.icon|length and button.buttonType.value == 'link' ? true : false %}
+
+            {{ render.createButton({
+                button: button.button,
+                type: button.buttonType.value|default("button"),
+                class: class ~ ' mt-20 ' ~ textColor['link'],
+                icon: button.icon,
+                linkIcon: linkIcon,
+                color: button.color.label|default("Green")
+            }) }}
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</section>

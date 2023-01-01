@@ -1,0 +1,63 @@
+{#
+==================================================
+    FAQs (faqs)
+    Variable:
+        - Block (Block)
+
+    Fields:
+        Content:
+        	- Related FAQs (relatedFaqs)
+
+        Settings:
+            - Limit (limit)
+            - Pagination (pagination)
+==================================================
+#}
+{{ craft.app.config.general.devMode ? ('<!-- Template: ' ~ _self ~ ' -->') | raw }}
+{% import '_includes/macros' as render %}
+
+{% set limit = block.limit|default('4') %}
+{% set pagination = block.pagination %}
+
+{% if block.relatedFaqs|length %}
+	{% set faqs = block.relatedFaqs.limit(limit) %}
+{% else %}
+	{% set faqs = craft.entries.section("faqs").limit(limit) %}
+{% endif %}
+
+{% if pagination %}
+	{% paginate faqs as pageInfo, faqs %}
+{% else %}
+	{% set faqs = faqs.all() %}
+{% endif %}
+
+{% for faqs in faqs %}
+{% if loop.first %}
+<div class="accordion mb-30" id="accordionPanelsStayOpenExample">
+{% endif %}
+	<div class="post-{{ block.getId() }} accordion-item" {{ listingAnimation|raw }}>
+		<h3 class="accordion-header" id="panelsStayOpen-heading-{{ loop.index }}">
+			<button class="accordion-button {{ not loop.last ? 'collapsed' }}" type="button" data-bs-toggle="collapse" data-bs-target="#panelsStayOpen-collapse{{ loop.index }}" aria-expanded="false" aria-controls="panelsStayOpen-collapse{{ loop.index }}">
+				{{ faqs.title }}
+			</button>
+		</h3>
+		<div id="panelsStayOpen-collapse{{ loop.index }}" class="accordion-collapse collapse{{ loop.last ? ' show' }}"
+			data-bs-parent="#accordionPanelsStayOpenExample">
+			<div class="accordion-body">
+				{{ render.replaceElements(faqs.text, {
+					'p': 'text-black',
+					'a': 'btn btn-link',
+					'ul': 'simple'
+				}) }}
+			</div>
+		</div>
+	</div>
+{% if loop.last %}
+</div>
+{% if pagination and pageInfo and pageInfo.totalPages|default(0) > 1 %}
+<div class="md:mt-7 mt-4 text-center" {{ listingAnimation|raw }}>
+	{% include "_includes/_pagination" %}
+</div>
+{% endif %}
+{% endif %}
+{% endfor %}

@@ -1,0 +1,103 @@
+{#
+==================================================
+    Location (location)
+    Variable:
+        - Block (Block)
+
+    Fields:
+        Content:
+        	- Related Location (relatedLocation)
+==================================================
+#}
+{{ craft.app.config.general.devMode ? ('<!-- Template: ' ~ _self ~ ' -->') | raw }}
+{% import '_includes/macros' as render %}
+
+{% set relatedLocation = block.relatedLocation %}
+{% if relatedLocation|length %}
+	{% set relatedLocation = relatedLocation %}
+{% else %}
+	{% set relatedLocation = craft.entries.section("location") %}
+{% endif %}
+
+{% set markers = collect([]) %}
+{% for location in relatedLocation.all() %}
+    {% set markerId = "#{location.id}-location" %}
+    {% set address = '<div class="infobox-body text-center">' ~ '<a class="mb-10 mb-2 btn btn-link" href="https://maps.google.com/?q=' ~ location.address.address|replace(' ', '') ~ '" target="_blank">'  ~ location.address.streetAddress ~ '<svg width="20" height="18" class="ms-2" fill="#69A134"><use xlink:href="#res-arrow-up-right"></use></svg></a></div>' ~ '<div class="text-center"><span class="text-black fw-bolder font-sm">' ~ location.address.parts.city ~ ', ' ~ location.address.parts.state ~ '</span></div>' %}
+	{% set markers = markers.merge([[address ,location.address.lat, location.address.lng, markerId]]) %}
+{% endfor %}
+
+<div id="map" class="map" data-marker="{{ markers|json_encode() }}"></div>
+
+{% for location in relatedLocation.all() %}
+{% if loop.first %}
+<div class="row mt-20 map-links">
+{% endif %}
+    {% set markerId = "#{location.id}-location" %}
+    <div class="map-link col-sm-6 col-lg-3 py-2" data-loc="{{ loop.index }}" {{ listingAnimation|raw }}>
+        <a href="https://maps.google.com/?q={{ location.address.address|replace(' ', '') }}" class="loc_link text-start btn btn-link" data-markerId="{{ markerId }}" target="_blank">{{ location.title }}<svg width="20" height="18" class="ms-2" fill="#69A134"><use xlink:href="#res-arrow-up-right"></use></svg></a>
+        <span>
+            {{ location.address.parts.city }} <br>
+            {{ location.address.parts.state }}
+        </span>
+    </div>
+{% if loop.last %}
+</div>
+{% endif %}
+{% endfor %}
+
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC6UjbWv02qkcvc0Va6vIlH6Mle9i0shV0" defer></script>
+{% js %}
+    let map;
+    let markerId = document.getElementById("map");
+    let infoWindow;
+    let marker;
+
+    function initMap() {
+        let markers = JSON.parse(markerId.dataset.marker);
+        for (let i = 0; i < 1; i++) {
+            map = new google.maps.Map(markerId, {
+                center: new google.maps.LatLng(markers[i][1], markers[i][2]),
+                zoom: 13,
+            });
+        }
+        var infowindow = new google.maps.InfoWindow();
+        for (let i = 0; i < markers.length; i++) {
+            marker = new google.maps.Marker({
+                position: new google.maps.LatLng(markers[i][1], markers[i][2]),
+                map: map,
+                icon: '/assets/icons/map_marker.svg'
+            });
+
+            google.maps.event.addListener(marker, 'click', (function(marker, i) {
+                return function() {
+                    console.log(markers[i]);
+                    infowindow.setContent(markers[i][0]);
+                    infowindow.open(map, marker);
+                }
+            })(marker, i));
+
+            let link = document.querySelectorAll('.loc_link');
+            link.forEach(function(element) {
+                element.addEventListener('mouseover', (function(marker, i) {
+                    return function() {
+                        let value = element.getAttribute('data-markerId');
+                        if (value == markers[i][3]) {
+                            infowindow.setContent(markers[i][0]);
+                            infowindow.open(map, marker);
+                        }
+                    }
+                })(marker, i));
+                element.addEventListener('mouseout', function(event) {
+                    infowindow.close();
+                });
+            });
+        }
+    }
+
+    window.addEventListener('load', (event) => {
+        if (markerId) {
+            initMap();
+        }
+    });
+
+{% endjs %}

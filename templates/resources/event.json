@@ -1,0 +1,7 @@
+{% set events = craft.calendar.events({
+    rangeStart: craft.app.request.post("rangeStart"),
+    rangeEnd: craft.app.request.post("rangeEnd"),
+    calendar: craft.app.request.post("calendar")|default(null),
+    limit: 999,
+}) %}
+{{ events.all|json_encode|raw }}

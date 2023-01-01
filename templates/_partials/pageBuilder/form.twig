@@ -1,0 +1,204 @@
+{#
+========================================
+    Form (form)
+
+    Variables
+        - Block (block)
+
+    Fields:
+        Content:
+            - Heading (heading)
+            - Sub Heading (subHeading)
+            Childs:
+                - Side Image (sideImage):
+                    Content:
+                        - Image (image)
+                    Animation Styles:
+                        - Animation (animation)
+                        - Animation Style (animationStyle)
+                        - Animation Easing (animationEasing)
+                        - Animation Duration (animationDuration)
+                        - Animation Offset (animationOffset)
+
+                - Side Content (sideContent):
+                    Content:
+                        - Heading (heading)
+                        - Sub Heading (subHeading)
+                        - Text (text)
+                        - Address (address)
+                        - Phone Number (phoneNumber)
+                        - Social Icons (socialIcons) [Neo]
+                    Animation Styles:
+                        - Animation (animation)
+                        - Content Animation Style (contentAnimationStyle)
+                        - Content Animation Easing (contentAnimationEasing)
+                        - Content Animation Duration (contentAnimationDuration)
+                        - Content Animation Offset (contentAnimationOffset)
+
+        Settings:
+            - Heading Size (headingSize)
+            - Text Alignment (textAlignment)
+            - Heading Border? (headingBorder)
+
+        Spacing:
+        	- Margin Top (marginTop)
+        	- Margin Bottom (marginBottom)
+        	- Padding Top (paddingTop)
+        	- Padding Bottom (paddingBottom)
+========================================
+#}
+{{ craft.app.config.general.devMode ? ('<!-- Template: ' ~ _self ~ ' -->') | raw }}
+{% import "_includes/macros" as render %}
+
+{% set parent = block.parent.type.handle|default(null) %}
+{% set headingSize = block.headingSize.value|default('h2') %}
+{% set headingAlignment = block.textAlignment.value|default('center') %}
+{% set child = block.children.one() %}
+{% set childHandle = child.type.handle|default(null) %}
+{% set image = childHandle == 'sideImage' ? child.image.one() %}
+{% set childHeadingSize = child.headingSize.value|default('h2') %}
+{% set childHeadingAlignment = child.textAlignment.value|default('start') %}
+{% set position = block.contentPosition.value|default(childHandle == 'sideContent' ? 'right' : 'left') %}
+{% set sectionTag = parent == 'container' ? 'div' : 'section' %}
+
+{% set backgroundColor = render.color({
+    handle :  currentBgColor,
+    swatch : 'background'
+}) %}
+
+{# Animation #}
+{% set contentAnimation = render.setAnimation({
+    animation: block.animation,
+    animationStyle: block.contentAnimationStyle.value|default('fade-up'),
+    animationDuration: block.contentAnimationDuration.value|default(500),
+    animationOffset: block.contentAnimationOffset.value|default(null),
+    animationEasing: block.contentAnimationEasing.value|default(null)
+}) | raw %}
+
+{% if child|length %}
+    {% set contentChildImageAnimation = render.setAnimation({
+        animation: child.animation,
+        animationStyle: child.animationStyle.value|default('fade-up'),
+        animationDuration: child.animationDuration.value|default(500),
+        animationOffset: child.animationOffset.value|default(null),
+        animationEasing: child.animationEasing.value|default(null)
+    }) | raw %}
+
+    {% set contentChildAnimation = render.setAnimation({
+        animation: child.animation,
+        animationStyle: child.contentAnimationStyle.value|default('fade-up'),
+        animationDuration: child.contentAnimationDuration.value|default(500),
+        animationOffset: child.contentAnimationOffset.value|default(null),
+        animationEasing: child.contentAnimationEasing.value|default(null)
+    }) | raw %}
+{% endif %}
+
+<{{ sectionTag }} class="{{ spacing.implode(' ') }} {{ backgroundColor }}">
+    <div class="container px-28">
+        <div class="row {{ position == 'right' ? 'flex-row-reverse' }}">
+            {% if block.heading|length or block.subHeading|length %}
+            <div class="col-12">
+                <div class="section-title mb-40 {{ 'text-' ~ headingAlignment }}">
+                    {% if block.heading|length %}
+                    <h2 class="{{ headingSize }} {{ block.headingBorder ? 'decorated-title pb-18' }} {{ headingAlignment == 'center' ? 'decorated-center' : (headingAlignment == 'end' ? 'border-right') }}">
+                        {{ block.heading|nl2br }}
+                    </h2>
+                    {% endif %}
+
+                    {% if block.subHeading|length %}
+                    <p class="subhead m-0">
+                        {{ block.subHeading|nl2br }}
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            {% set form = block.form.handle %}
+            {% if form|length %}
+            <div class="{{ child|length ? 'col-md-6' : 'col-8 mx-auto' }}" {{ contentAnimation|raw }}>
+                {{ craft.freeform.form(form).render() }}
+            </div>
+            {% endif %}
+
+            {% if child|length %}
+            {% if childHandle == 'sideImage' %}
+            {% if image|length %}
+            <div class="col-md-6 col-lg-4 mx-lg-auto order-first order-md-0 mb-40 mb-md-0" {{ contentChildImageAnimation|raw }}>
+                <div class="bg-decorated">
+                    {% set params = {
+                        image: image,
+                        alt: image.title,
+                        width: image.width,
+                        height: image.height
+                    } %}
+                    {{ render.setImage(params) }}
+                </div>
+            </div>
+            {% endif %}
+
+            {% else %}
+            <div class="col-lg-6 {{ position == 'left' ? 'ps-60' }}">
+                {% if child.heading|length %}
+                <div class="{{ child.headingBorder ? 'decorated-title pb-18' }} {{ childHeadingAlignment == 'center' ? 'decorated-center' : (childHeadingAlignment == 'end' ? 'border-right') }} {{ 'text-' ~ childHeadingAlignment }}">
+                    <h2 class="{{ childHeadingSize }}" {{ contentChildAnimation|raw }}>
+                        {{ child.heading|nl2br }}
+                    </h2>
+                </div>
+                {% endif %}
+
+                {% if child.subHeading|length %}
+                <span class="subhead {{ 'text-' ~ childHeadingAlignment }}" {{ contentChildAnimation|raw }}>
+                    {{ child.subHeading|nl2br }}
+                </span>
+                {% endif %}
+
+                {% if child.text|length %}
+                <div {{ contentChildAnimation|raw }}>
+                    {{ render.replaceElements(child.text, {
+                        'p': 'text-black ' ~ ('text-' ~ childHeadingAlignment)
+                    }) }}
+                </div>
+                {% endif %}
+
+                {% if not child.phoneNumber.isEmpty() or child.address.address|length or child.socialIcons|length %}
+                <ul class="contact-list list-unstyled" {{ contentChildAnimation|raw }}>
+                    {% if not child.phoneNumber.isEmpty() %}
+                    <li>
+                        <svg width="20" height="25" fill="#d95a32" class="position-absolute" style="margin-top: 3px; left: -5px;"><use xlink:href="#footer-phone"></use></svg>
+                        <a href="{{ child.phoneNumber.getUrl() }}">{{ child.phoneNumber.getText() }}</a>
+                    </li>
+                    {% endif %}
+
+                    {% if child.address.address|length %}
+                    <li>
+                        <svg width="20" height="25" fill="#d95a32" class="position-absolute" style="margin-top: 3px; left: -5px;"><use xlink:href="#footer-map"></use></svg>
+                        <address>{{ child.address.address }}</address>
+                    </li>
+                    {% endif %}
+
+                    {% for socialIcon in child.socialIcons.all() %}
+                    {% if loop.first %}
+                    <li class="with-list">
+                        <svg width="20" height="25" fill="#d95a32" class="position-absolute" style="margin-top: 3px; left: -5px;"><use xlink:href="#social-heart"></use></svg>
+                        Follow Us:
+                        {% endif %}
+                        <a href="{{ socialIcon.socialIconsUrl.getUrl() }}" {% if socialIcon.socialIconsUrl.getTarget() %}target="_blank" rel="noopener"{% endif %}>
+                            {{ svg(socialIcon.icon.path)|attr({
+                                'width': '20',
+                                'height': '20'
+                            }) }}
+                            <span class="visually-hidden">{{ socialIcon.icon.glyph }}</span>
+                        </a>
+                        {% if loop.last %}
+                    </li>
+                    {% endif %}
+                    {% endfor %}
+                </ul>
+                {% endif %}
+            </div>
+            {% endif %}
+            {% endif %}
+        </div>
+    </div>
+</{{ sectionTag }}>

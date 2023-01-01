@@ -1,0 +1,68 @@
+{#
+========================================
+    Quote (quote)
+
+    Variables
+        - Block (block)
+
+    Fields:
+        Content:
+        	- Quote (subHeading)
+        	- Attribution (heading)
+
+        Settings:
+        	- Background Color (backgroundColor)
+            - Text Alignment (textAlignment)
+
+        Animation Styles:
+            - Animation (animation)
+            - Content Animation Style (contentAnimationStyle)
+            - Content Animation Easing (contentAnimationEasing)
+            - Content Animation Duration (contentAnimationDuration)
+            - Content Animation Offset (contentAnimationOffset)
+
+        Spacing:
+        	- Margin Top (marginTop)
+        	- Margin Bottom (marginBottom)
+        	- Padding Top (paddingTop)
+        	- Padding Bottom (paddingBottom)
+========================================
+#}
+{{ craft.app.config.general.devMode ? ('<!-- Template: ' ~ _self ~ ' -->') | raw }}
+{% import "_includes/macros" as render %}
+
+{% set section = entry.section.handle|default(null) %}
+{% set textAlignment = block.textAlignment.value|default('center') %}
+{% set backgroundColor = render.color({
+    handle :  currentBgColor,
+    swatch : 'background'
+}) %}
+
+{# Animation #}
+{% set contentAnimation = render.setAnimation({
+    animation: block.animation,
+    animationStyle: block.contentAnimationStyle.value|default('fade-up'),
+    animationDuration: block.contentAnimationDuration.value|default(500),
+    animationOffset: block.contentAnimationOffset.value|default(null),
+    animationEasing: block.contentAnimationEasing.value|default(null)
+}) | raw %}
+
+<section class="{{ backgroundColor }} {{ spacing.implode(' ') }}">
+    <div class="container">
+    	<blockquote class="{{ 'text-' ~ textAlignment }} col-lg-8 col-12 mx-auto blockquote mt-0 mb-0{{ currentBgColor == 'Gray' ? ' bg-white' }}">
+    		<div {{ contentAnimation|raw }}>
+    			{{ render.replaceElements(block.subHeading, {
+    				'p' : 'text-black'
+    			}) }}
+    		</div>
+
+    		{% if block.heading|length %}
+    		<div class="mt-10 text-dark" {{ contentAnimation|raw }}>
+    			<span>
+    				{{ '-' ~ block.heading }}
+    			</span>
+    		</div>
+    		{% endif %}
+    	</blockquote>
+    </div>
+</section>

@@ -1,0 +1,121 @@
+{#
+========================================
+    Featured Basic Content (featuredBasicContent)
+
+    Variables
+        - Block (block)
+
+    Fields:
+        Content:
+            - Heading (heading)
+            - Sub Heading (subHeading)
+            - Buttons (buttons) [Neo]
+                - Button (button)
+                - Icon (icon)
+                - Button Type (buttonType)
+                - Color (color)
+
+        Settings:
+        	- Background Color (backgroundColor)
+            - Heading Size (headingSize)
+            - Text Alignment (textAlignment)
+            - Heading Border? (headingBorder)
+
+        Animation Styles:
+        	- Animation (animation)
+        	- Content Animation Style (contentAnimationStyle)
+        	- Content Animation Easing (contentAnimationEasing)
+        	- Content Animation Duration (contentAnimationDuration)
+        	- Content Animation Offset (contentAnimationOffset)
+
+        Spacing:
+        	- Margin Top (marginTop)
+        	- Margin Bottom (marginBottom)
+        	- Padding Top (paddingTop)
+        	- Padding Bottom (paddingBottom)
+========================================
+#}
+{{ craft.app.config.general.devMode ? ('<!-- Template: ' ~ _self ~ ' -->') | raw }}
+{% import "_includes/macros" as render %}
+
+{% set parent = block.parent.type.handle|default(null) %}
+{% set section = entry.section.handle|default(null) %}
+{% set headingSize = block.headingSize.value|default('h2') %}
+{% set headingAlignment = block.textAlignment.value|default('center') %}
+{% set backgroundColor = render.color({
+    handle :  block.cardBackgroundColor.label|default('Green'),
+    swatch : 'cartBackground'
+}) %}
+{% set sectionTag = parent == 'container' ? 'div' : 'section' %}
+{% set phoneNumb = block.phoneNumber %}
+{% set email = block.emailAddress %}
+
+{% set buttonColor = {
+    'White': 'btn-primary-light',
+    'Green': 'btn-primary-light',
+    'Blue': 'btn-secondary-light',
+    'Orange': 'btn-danger-light',
+} %}
+
+{# Animation #}
+{% set contentAnimation = render.setAnimation({
+    animation: block.animation,
+    animationStyle: block.contentAnimationStyle.value|default('fade-up'),
+    animationDuration: block.contentAnimationDuration.value|default(500),
+    animationOffset: block.contentAnimationOffset.value|default(null),
+    animationEasing: block.contentAnimationEasing.value|default(null)
+}) | raw %}
+
+{% set contentCardsAnimation = render.setAnimation({
+    animation: block.animation,
+    animationStyle: block.contentAnimationStyle.value|default('flip-down'),
+    animationDuration: block.contentAnimationDuration.value|default(500),
+    animationOffset: block.contentAnimationOffset.value|default(null),
+    animationEasing: block.contentAnimationEasing.value|default(null)
+}) | raw %}
+
+<{{ sectionTag }} class="{{ spacing.implode(' ') }}">
+	<div class="container">
+		<div class="row justify-content-center">
+			<div class="col-lg-10">
+				<div class="cta {{ backgroundColor }} text-center text-white py-56" {{ contentCardsAnimation|raw }}>
+					<div class="cta-inner {{ 'text-' ~ headingAlignment }}">
+						{% if block.heading|length %}
+						<h2 class="{{ headingSize }} {{ headingAlignment == 'center' ? 'decorated-center' : headingAlignment == 'end' ? 'border-right' }} {{ block.headingBorder ? 'decorated-white decorated-title' }}" {{ contentAnimation|raw }}>
+							{{ block.heading|nl2br }}
+						</h2>
+						{% endif %}
+
+						{% if block.subHeading|length %}
+						<p class="subhead" {{ contentAnimation|raw }}>
+							{{ block.subHeading|nl2br }}
+						</p>
+						{% endif %}
+
+						{% if not phoneNumb.isEmpty() or not email.isEmpty() %}
+						<p {{ contentAnimation|raw }}>
+							{% if not phoneNumb.isEmpty() %} Phone: <a href="{{ phoneNumb.getUrl() }}">{{ phoneNumb.getText() }}</a> {{ not email.isEmpty() ? ' | ' }} {% endif %}
+							{% if not email.isEmpty() %} Email: <a href="{{ email.getUrl() }}">{{ email.getText() }}</a>{% endif %}
+						</p>
+						{% endif %}
+
+						<div {{ contentAnimation|raw }}>
+							{% for button in block.buttons.all() %}
+							{% set color = buttonColor[block.cardBackgroundColor.label|default('Green')] %}
+							{% set linkIcon = not button.icon.icon|length and button.buttonType.value == 'link' ? true : false %}
+							{{ render.createButton({
+								button: button.button,
+								type: button.buttonType.value|default("button"),
+								class: color,
+								icon: button.icon,
+								linkIcon: linkIcon,
+								color: button.color.label|default("White")
+							}) }}
+							{% endfor %}
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</{{ sectionTag }}>

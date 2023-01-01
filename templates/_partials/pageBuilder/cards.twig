@@ -1,0 +1,130 @@
+{#
+========================================
+    Cards (cards)
+
+    Variables
+        - Block (block)
+
+    Fields:
+        Content:
+        	- Heading (heading)
+        	- Sub Heading (subHeading)
+            - Text (text)
+            - Buttons (buttons) [Neo]
+                - Button (button)
+                - Icon (icon)
+                - Button Type (buttonType)
+                - Color (color)
+            Child:
+            	- Image (image)
+            	- Heading (heading)
+	        	- Sub Heading (subHeading)
+	            - Text (text)
+	            - Button (button)
+
+        Settings:
+        	- Background Color (backgroundColor)
+            - Heading Size (headingSize)
+            - Text Alignment (textAlignment)
+            - Heading Border? (headingBorder)
+
+        Animation Styles:
+            - Animation (animation)
+            - Content Animation Style (contentAnimationStyle)
+            - Content Animation Easing (contentAnimationEasing)
+            - Content Animation Duration (contentAnimationDuration)
+            - Content Animation Offset (contentAnimationOffset)
+
+        Spacing:
+        	- Margin Top (marginTop)
+        	- Margin Bottom (marginBottom)
+        	- Padding Top (paddingTop)
+        	- Padding Bottom (paddingBottom)
+========================================
+#}
+{{ craft.app.config.general.devMode ? ('<!-- Template: ' ~ _self ~ ' -->') | raw }}
+{% import "_includes/macros" as render %}
+
+{% set section = entry.section.handle|default(null) %}
+{% set parent = block.parent.type.handle|default(null) %}
+{% set cardsLayout = block.cardsLayout.value|default('textCards') %}
+{% set headingSize = block.headingSize.value|default('h2') %}
+{% set headingAlignment = block.textAlignment.value|default('center') %}
+{% set makeCardsTransparent = block.makeCardsTransparent %}
+{% set backgroundColor = render.color({
+    handle :  currentBgColor,
+    swatch : 'background'
+}) %}
+
+{% set sectionTag = parent == 'container' ? 'div' : 'section' %}
+
+{# Animation #}
+{% set contentAnimation = render.setAnimation({
+    animation: block.animation,
+    animationStyle: block.contentAnimationStyle.value|default('fade-up'),
+    animationDuration: block.contentAnimationDuration.value|default(500),
+    animationOffset: block.contentAnimationOffset.value|default(null),
+    animationEasing: block.contentAnimationEasing.value|default(null)
+}) | raw %}
+
+{% set contentCardsAnimation = render.setAnimation({
+    animation: block.animation,
+    animationStyle: block.animationStyle.value|default('fade-left'),
+    animationDuration: block.animationDuration.value|default(500),
+    animationOffset: block.animationOffset.value|default(null),
+    animationEasing: block.AnimationEasing.value|default(null)
+}) | raw %}
+
+<{{ sectionTag }}>
+	<div class="{{ spacing.implode(' ') }} {{ backgroundColor }}">
+		<div class="container">
+			{% if block.heading|length or block.subHeading|length or block.text|length %}
+			<div class="section-title mb-0 {{ 'text-' ~ headingAlignment }}">
+				<div class="{{ headingAlignment == 'center' ? 'border-center' : headingAlignment == 'end' ? 'border-right' }} {{ not block.headingBorder ? 'pb-10 position-relative' : 'decorated-title' }}">
+					{% if block.heading|length %}
+					<h2 class="{{ headingSize }}" {{ contentAnimation|raw }}>
+						{{ block.heading|nl2br }}
+					</h2>
+					{% endif %}
+
+					{% if block.subHeading|length %}
+					<p class="subhead text-black" {{ contentAnimation|raw }}>
+						{{ block.subHeading|nl2br }}
+					</p>
+					{% endif %}
+				</div>
+
+				{% if block.text|length %}
+				<div class="post__body blog-list" {{ contentAnimation|raw }}>
+					{{ render.replaceElements(block.text, {
+						'p' : 'text-black'
+					}) }}
+				</div>
+				{% endif %}
+			</div>
+			{% endif %}
+
+			{% include "_partials/pageBuilder/cards/" ~ cardsLayout %}
+
+			{% if block.buttons|length %}
+			{% for button in block.buttons.all() %}
+			{% set linkIcon = not button.icon.icon|length and button.buttonType.value == 'link' ? true : false %}
+			{% if loop.first %}
+			<div class="buttons-wrapper justify-content-{{ headingAlignment }} mt-20" {{ contentAnimation|raw }}>
+			{% endif %}
+			    {{ render.createButton({
+			        button: button.button,
+			        type: button.buttonType.value|default("button"),
+			        class: '',
+			        icon: button.icon,
+			        linkIcon: linkIcon,
+			        color: button.color.label|default("Green")
+			    }) }}
+			{% if loop.last %}
+			</div>
+			{% endif %}
+			{% endfor %}
+			{% endif %}
+		</div>
+	</div>
+</{{ sectionTag }}>

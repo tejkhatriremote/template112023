@@ -1,0 +1,178 @@
+{% extends '_layouts/main' %}
+{% import "_includes/macros" as render %}
+
+{% block content %}
+    {{ craft.app.config.general.devMode ? ('<!-- Page: ' ~ _self ~ ' -->') | raw }}
+    <section class="hero-section">
+        {% set image = entry.image.one() %}
+        {% if image|length %}
+        <div class="hero-section__bg">
+            {% set params = {
+                image: image,
+                alt: image.title,
+                width: image.width,
+                height: image.height
+            } %}
+            {{ render.setImage(params) }}
+        </div>
+        {% endif %}
+
+        <div class="container">
+            <div class="hero-section__inner">
+                <h1 class="h1 mb-30">
+                    {{ entry.title }}
+                </h1>
+
+                {{ render.replaceElements(entry.text, {
+                    'p': 'subhead'
+                }) }}
+            </div>
+        </div>
+    </section>
+
+    {#
+    =============================================
+        Include Breadcrumb
+    =============================================
+    #}
+    {% include "_includes/breadcrumb" %}
+
+    {% if entry.blogBuilder|length %}
+    {#
+    =============================================
+        Include pageBuilder
+    =============================================
+    #}
+    {% include "_partials/blogBuilder" %}
+    {% else %}
+    {% if entry.text|length %}
+    <div class="container mb-2">
+        <div class="post__body blog-list col-12 col-lg-8 mx-auto">
+            {{ render.replaceElements(entry.text, {
+                'p': 'text-black',
+                'a': 'btn btn-link',
+                'ul': 'simple'
+            }) }}
+        </div>
+    </div>
+    {% endif %}
+    {% endif %}
+
+    {% set relatedAuthor = entry.relatedTeamMembers.all() %}
+    {% for author in relatedAuthor %}
+    {% if loop.first %}
+    <div class="container">
+        <div class="col-12 col-lg-10 mx-auto">
+            <hr>
+        </div>
+        <div class="col col-lg-8 col-12 mx-auto {{ relatedAuthor|length > 1 ? 'pt-40 pb-60' }}">
+            <div class="{{ relatedAuthor|length > 1 ? 'row' }}">
+    {% endif %}
+                <a href="{{ author.getUrl() }}" class="blog-author px-10 {{ relatedAuthor|length > 1 ? 'col-lg-6 col-12' }}">
+                    <div class="row">
+                        {% set image = author.image.one() %}
+                        {% if image|length %}
+                        <div class="col-lg-3 mb-30 mb-lg-0">
+                            <div class="blog-author-photo">
+                                {% set params = {
+                                    image: image,
+                                    alt: image.title,
+                                    width: image.width,
+                                    height: image.height
+                                } %}
+                                {{ render.setImage(params) }}
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <div class="col-lg-9">
+                            <div class="blog-author-text">
+                                <h3 class="mb-2">
+                                    {{ author.title }}
+                                </h3>
+
+                                {% if author.organization|length or author.position|length %}
+                                <p class="text-secondary">
+                                    {{ author.position }} {{ author.organization|length ? ', ' ~ author.organization }}
+                                </p>
+                                {% endif %}
+
+                                {% if not author.phoneNumber.isEmpty() %}
+                                    <a href="{{ author.phoneNumber.getUrl() }}" class="text-secondary">{{ author.phoneNumber.getText() }}</a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </a>
+    {% if loop.last %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    {% endfor %}
+
+    {% set blogs = craft.entries.section("blogs").limit(3) %}
+    {% for blog in blogs.all() %}
+    {% if loop.first %}
+    <section class="decorated-block decorated-block-top three-cards">
+        <div class="decorated-block-inner pt-30 py-60">
+            <div class="container">
+                <div class="section-title text-center">
+                    <h2>
+                        Latest Posts
+                    </h2>
+                </div>
+                <div class="row gy-30">
+    {% endif %}
+                    <div class="col-lg-4">
+                        <div class="card">
+                            {% set image = blog.image.one() %}
+                            {% if image|length %}
+                            <a href="{{ blog.getUrl() }}">
+                                {% set params = {
+                                    image: image,
+                                    alt: image.title,
+                                    class: 'card-img-top',
+                                    width: image.width,
+                                    height: image.height
+                                } %}
+                                {{ render.setImage(params) }}
+                            </a>
+                            {% endif %}
+
+                            <div class="card-body">
+                                <span class="subhead">{{ blog.dateCreated|date }}</span>
+                                <h3 class="card-title">
+                                    <a href="{{ blog.getUrl() }}">{{ blog.title }}</a>
+                                </h3>
+
+                                {% set relatedAuthor = blog.relatedTeamMembers %}
+                                {% if relatedAuthor|length %}
+                                <div class="post__body mb-0">
+                                    <p class="text-black">By Post
+                                        {% for author in relatedAuthor.all() %}
+                                        {{ author.title }} {{ not loop.last ? ' , ' }}
+                                        {% endfor %}
+                                    </p>
+                                </div>
+                                {% endif %}
+
+                                {% if blog.text|length %}
+                                {{ render.replaceElements(blog.text, {
+                                    'p': 'card-text text-black mb-10',
+                                    'a': 'btn btn-link',
+                                    'ul': 'simple'
+                                }) }}
+                                {% endif %}
+                                <a href="{{ blog.getUrl() }}" class="btn btn-link">Learn More »</a>
+                            </div>
+                        </div>
+                    </div>
+    {% if loop.last %}
+                </div>
+            </div>
+        </div>
+    </section>
+    {% endif %}
+    {% endfor %}
+{% endblock %}

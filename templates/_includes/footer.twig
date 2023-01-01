@@ -1,0 +1,132 @@
+{#
+========================================
+    Footer (footer)
+    General Information (generalInformation)
+
+    Variables
+        - Global (footer, generalInformation)
+
+    Fields:
+        Footer:
+            - Logo (image)
+            - Navigation (navigation)
+            - Social Icons (socialIcons)
+                - Icon (icon)
+                - URL (socialIconsUrl)
+
+        General Information
+            - Address (address)
+            - Phone Number (phoneNumber)
+            - Email Address (emailAddress)
+========================================
+#}
+{{ craft.app.config.general.devMode ? ('<!-- Template: ' ~ _self ~ ' -->') | raw }}
+{% import "_includes/macros" as render %}
+
+{% set address = generalInformation.address.address %}
+{% set phoneNumb = generalInformation.phoneNumber %}
+{% set email = generalInformation.emailAddress %}
+
+<footer class="footer text-white">
+    <div class="footer-top py-60 py-md-80 bg-darker">
+        <div class="container">
+            <div class="row flex-column-reverse flex-lg-row">
+                {% if footer.navigation|length or address|length or not phoneNumb.isEmpty() or not email.isEmpty() %}
+                <div class="col-lg-9">
+                    {% if footer.navigation|length %}
+                        {% set footerNavigation = craft.navigation.nodes(footer.navigation).level(1).all() %}
+
+                        {% for node in footerNavigation %}
+                            {% if loop.first %}
+                            <nav aria-label="footer navigation">
+                                <ul class="footer-nav list-unstyled pb-15">
+                            {% endif %}
+                                    <li class="pb-10"><a href="{{ node.url }}" class="text-capitalize{{ node.classes|length ? ' ' ~ node.classes }}" {% for attribute in node.customAttributes %}{{ attribute.attribute }}="{{ attribute.value }}"{% endfor %} {% if node.newWindow %}target="_blank" rel="noopener"{% endif %}>{{ node.title }}</a></li>
+                            {% if loop.last %}
+                                </ul>
+                            </nav>
+                            {% endif %}
+                        {% endfor %}
+                    {% endif %}
+
+                    {% if address|length or not phoneNumb.isEmpty() or not email.isEmpty() %}
+                    <ul class="footer-list list-unstyled">
+                        {% if address|length %}
+                        <li>
+                            <svg width="20" height="25" fill="#d95a32" class="position-absolute" style="margin-top: 3px; left: -5px;"><use xlink:href="#footer-map"></use></svg>
+                            <address>{{ address }}</address>
+                        </li>
+                        {% endif %}
+
+                        {% if not phoneNumb.isEmpty() %}
+                        <li>
+                            <svg width="20" height="25" fill="#d95a32" class="position-absolute" style="margin-top: 3px; left: -5px;"><use xlink:href="#footer-phone"></use></svg>
+                            <a href="{{ phoneNumb.getUrl() }}">{{ phoneNumb.getText() }}</a>
+                        </li>
+                        {% endif %}
+
+                        {% if not email.isEmpty() %}
+                        <li>
+                            <svg width="20" height="25" fill="#d95a32" class="position-absolute" style="margin-top: 3px; left: -2px;"><use xlink:href="#footer-envelope"></use></svg>
+                            <a href="{{ email.getUrl() }}">{{ email.getText() }}</a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                <div class="col-lg-3 mb-40 mb-lg-0">
+                    <div class="footer-column-logo">
+                        {% set image = footer.image.one() %}
+                        {% if image|length %}
+                        <a href="{{ siteUrl() }}" class="footer-logo" aria-label="{{ siteName }}">
+                            {% if image.extension == "svg" %}
+                                {{ svg(image.getVolume().fs.path ~ "/" ~ image.getFolder().path ~ image.filename) | attr({
+                                    class: "mw-100",
+                                }) }}
+                            {% else %}
+                                {{ render.setImage({
+                                    image: image,
+                                    alt: image.title,
+                                    width: image.width,
+                                    height: image.height,
+                                    class: 'mw-100 h-auto'
+                                }) }}
+                            {% endif %}
+                        </a>
+                        {% endif %}
+
+                        {% for socialIcon in footer.socialIcons.all() %}
+                            {% if loop.first %}
+                            <div class="footer-socials">
+                                <ul class="socials">
+                            {% endif %}
+                                    <li>
+                                        <a href="{{ socialIcon.socialIconsUrl.getUrl() }}" {% if socialIcon.socialIconsUrl.getTarget() %}target="_blank" rel="noopener"{% endif %}>
+                                            {{ svg(socialIcon.icon.path)|attr({
+                                                'width': '32',
+                                                'height': '32'
+                                            }) }}
+                                            <span class="visually-hidden">{{ socialIcon.icon.glyph }}</span>
+                                        </a>
+                                    </li>
+                            {% if loop.last %}
+                                </ul>
+                            </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+    <div class="footer-bottom bg-dark">
+        <div class="container">
+            <p class="copyright">
+                Copyright © {{ now|date('Y') }} {{ siteName }}
+            </p>
+        </div>
+    </div>
+</footer>

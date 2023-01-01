@@ -1,0 +1,79 @@
+{#
+========================================
+    Accordians (accordians)
+
+    Variables
+        - Block (block)
+
+    Fields:
+        Content:
+        	- Child
+        		- Accordian (accordian)
+        			- Question? (heading)
+        			- Answer (subHeading)
+
+        Settings:
+        	- Background Color (backgroundColor)
+
+        Animation Styles:
+        	- Animation (animation)
+        	- Content Animation Style (contentAnimationStyle)
+        	- Content Animation Easing (contentAnimationEasing)
+        	- Content Animation Duration (contentAnimationDuration)
+        	- Content Animation Offset (contentAnimationOffset)
+
+        Spacing:
+        	- Margin Top (marginTop)
+        	- Margin Bottom (marginBottom)
+        	- Padding Top (paddingTop)
+        	- Padding Bottom (paddingBottom)
+========================================
+#}
+{{ craft.app.config.general.devMode ? ('<!-- Template: ' ~ _self ~ ' -->') | raw }}
+{% import "_includes/macros" as render %}
+
+{% set parent = block.parent.type.handle|default(null) %}
+{% set backgroundColor = render.color({
+    handle :  currentBgColor,
+    swatch : 'background'
+}) %}
+{% set sectionTag = parent == 'container' ? 'div' : 'section' %}
+
+{# Animation #}
+{% set contentAnimation = render.setAnimation({
+    animation: block.animation,
+    animationStyle: block.contentAnimationStyle.value|default('fade-up'),
+    animationDuration: block.contentAnimationDuration.value|default(500),
+    animationOffset: block.contentAnimationOffset.value|default(null),
+    animationEasing: block.contentAnimationEasing.value|default(null)
+}) | raw %}
+
+<{{ sectionTag }} class="{{ backgroundColor }} {{ spacing.implode(' ') }}">
+	<div class="container">
+		{% for child in block.children.all() %}
+    		{% if loop.first %}
+    		<div class="accordion mb-30" id="accordionPanelsStayOpenExample">
+    		{% endif %}
+    			<div class="accordion-item" {{ contentAnimation|raw }}>
+    				<h3 class="accordion-header" id="panelsStayOpen-headingTwo">
+    					<button class="accordion-button {{ not loop.last ? 'collapsed' }}" type="button" data-bs-toggle="collapse" data-bs-target="#panelsStayOpen-{{ loop.index }}" aria-expanded="false" aria-controls="panelsStayOpen-{{ loop.index }}">
+    						{{ child.heading }}
+    					</button>
+    				</h3>
+
+    				{% if child.text|length %}
+    				<div id="panelsStayOpen-{{ loop.index }}" class="accordion-collapse collapse{{ loop.last ? ' show' }}" data-bs-parent="#accordionPanelsStayOpenExample">
+    					<div class="accordion-body blog-list">
+    						{{ render.replaceElements(child.text, {
+    							'p' : 'text-black'
+    						}) }}
+    					</div>
+    				</div>
+    				{% endif %}
+    			</div>
+    		{% if loop.last %}
+    		</div>
+    		{% endif %}
+		{% endfor %}
+	</div>
+</{{ sectionTag }}>

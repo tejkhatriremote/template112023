@@ -1,0 +1,110 @@
+{{ craft.app.config.general.devMode ? ('<!-- Template: ' ~ _self ~ ' -->') | raw }}
+{% import "_includes/macros" as render %}
+
+{% set perRowLimit = block.perRowLimit.value|default(makeCardsTransparent ? '3' : '2') %}
+
+{% set limit = {
+    1  : "col-xl-7",
+    2  : "col-xl-6",
+    3  : "col-xl-4",
+    4  : "col-xl-3",
+} %}
+
+{% set handSvg = {
+	1  : "two-row-handSvg",
+	2  : "two-row-handSvg",
+	3  : "three-row-handSvg",
+	4  : "four-row-handSvg",
+} %}
+
+{% set hexColor = {
+	'none' : '',
+	'White': '#fff',
+	'Green': '#69a134',
+	'Blue': '#3761AD',
+	'Orange': '#D95A32',
+} %}
+
+{% set color = {
+    'White':{
+        'iconColor': 'res-white',
+        'text': 'text-black',
+        'button': 'Green'
+    },
+    'Green':{
+        'iconColor': 'res-green',
+        'text': 'text-white',
+        'button': 'White'
+    },
+    'Blue':{
+        'iconColor': 'res-blue-card',
+        'text': 'text-white',
+        'button': 'White'
+    },
+    'Orange':{
+        'iconColor': 'res-red-card',
+        'text': 'text-white',
+        'button': 'White'
+    },
+} %}
+
+{% for card in block.children.all() %}
+{% set headingBorder = card.headingBorder %}
+{% set cardBackgroundColor = render.color({
+    handle :  card.cardBackgroundColor.label|default(loop.index is odd ? 'Blue' : 'Orange'),
+    swatch : 'cartBackground'
+}) %}
+{% set cardColor = color[card.cardBackgroundColor.label|default(not makeCardsTransparent ? (loop.index is odd ? 'Blue' : 'Orange') : 'White')] %}
+{% set headingBorder = card.headingBorder %}
+
+{% if loop.first %}
+<div class="row gy-28 justify-content-center">
+{% endif %}
+	<div class="col-sm-6 {{ limit[perRowLimit] }} {% if block.cardHandSvg %}{{ handSvg[perRowLimit] }}{% endif %}" style="--svg-color-var: {{ hexColor[card.cardBackgroundColor.label|default(loop.index is odd ? 'Blue' : 'Orange')] }}" {{ contentCardsAnimation|raw }}>
+		<div class="card res px-0">
+			{% set image = card.image.one() %}
+			{% set imgClass = makeCardsTransparent ? 'img-res-photo' %}
+			{% if image|length %}
+			<div class="res-photo">
+				{% set params = {
+					image: image,
+					alt: image.title,
+					class: imgClass,
+					width: image.width,
+					height: image.height
+				} %}
+				{{ render.setImage(params) }}
+			</div>
+			{% endif %}
+
+			{% if card.heading|length or card.subHeading|length or not card.button.isEmpty %}
+			<div class="card-body {{ not makeCardsTransparent ? cardBackgroundColor }}">
+				{% set line_white = cardBackgroundColor == 'text-bg-success' ? ' decorated-white' %}
+				{% if card.heading|length %}
+					<h3 class="card-title {{ headingBorder ? 'decorated-title ' ~ line_white }} {{ cardColor['text'] }}">{{ card.heading|nl2br }}</h3>
+				{% endif %}
+
+				{% if card.subHeading|length %}
+					<p class="card-text {{ cardColor['text'] }}">
+				  		{{ card.subHeading|nl2br }}
+					</p>
+			 	{% endif %}
+
+			 	{% if not card.button.isEmpty %}
+			 		{% set class = cardBackgroundColor == 'bg-white' or makeCardsTransparent ? 'text-success' %}
+			 		{{ render.createButton ({
+			 		    button: card.button,
+			 		    type: 'link',
+			 		    class: class,
+			 		    linkIcon: true,
+			 		    color: cardColor['button']
+			 		}) }}
+			 	{% endif %}
+			</div>
+			{% endif %}
+		</div>
+	</div>
+{% if loop.last %}
+</div>
+{% endif %}
+{% endfor %}

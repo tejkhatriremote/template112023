@@ -1,0 +1,71 @@
+{#
+========================================
+    Table (table)
+
+    Variables
+        - Block (block)
+
+    Fields:
+        Content:
+        	- Table (table)
+
+        Animation Styles:
+            - Animation (animation)
+            - Content Animation Style (contentAnimationStyle)
+            - Content Animation Easing (contentAnimationEasing)
+            - Content Animation Duration (contentAnimationDuration)
+            - Content Animation Offset (contentAnimationOffset)
+
+        Spacing:
+        	- Margin Top (marginTop)
+        	- Margin Bottom (marginBottom)
+        	- Padding Top (paddingTop)
+        	- Padding Bottom (paddingBottom)
+========================================
+#}
+{{ craft.app.config.general.devMode ? ('<!-- Template: ' ~ _self ~ ' -->') | raw }}
+{% import "_includes/macros" as render %}
+
+{# Animation #}
+{% set contentAnimation = render.setAnimation({
+    animation: block.animation,
+    animationStyle: block.contentAnimationStyle.value|default('zoom-in-up'),
+    animationDuration: block.contentAnimationDuration.value|default(500),
+    animationOffset: block.contentAnimationOffset.value|default(null),
+    animationEasing: block.contentAnimationEasing.value|default(null)
+}) | raw %}
+
+<div class="container {{ spacing.implode(' ') }}">
+	<div class="col-12 col-lg-8 mx-auto">
+		<table class="table table-striped" title="very long text description for this table" {{ contentAnimation|raw }}>
+			<caption class="visually-hidden">example of table</caption>
+			{% for col in block.table.columns %}
+			{% if loop.first %}
+			<thead class="table-dark">
+				<tr>
+			{% endif %}
+					<th align="{{ col.align }}" scope="col" width="{{ col.width }}">
+						{{ col.heading }}
+					</th>
+			{% if loop.last %}
+				</tr>
+			</thead>
+			{% endif %}
+			{% endfor %}
+
+			{% for row in block.table.rows %}
+			{% if loop.first %}
+			<tbody>
+			{% endif %}
+				<tr>
+					{% for cell in row %}
+						<td align="{{ block.table.columns[loop.index0].align }}">{{ cell }}</td>
+					{% endfor %}
+				</tr>
+			{% if loop.last %}
+			</tbody>
+			{% endif %}
+			{% endfor %}
+		</table>
+	</div>
+</div>

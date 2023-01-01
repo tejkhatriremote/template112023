@@ -1,0 +1,81 @@
+{#
+========================================
+    Buttons (buttons)
+
+    Variables
+        - Block (block)
+
+    Fields:
+        Content:
+            - Buttons (buttons) [Neo]
+                - Button (button)
+                - Icon (icon)
+                - Button Type (buttonType)
+                - Color (color)
+
+        Settings:
+        	- Background Color (cardBackgroundColor)
+            - Text Alignment (textAlignment)
+
+        Animation Styles:
+            - Animation (animation)
+            - Content Animation Style (contentAnimationStyle)
+            - Content Animation Easing (contentAnimationEasing)
+            - Content Animation Duration (contentAnimationDuration)
+            - Content Animation Offset (contentAnimationOffset)
+
+        Spacing:
+        	- Margin Top (marginTop)
+        	- Margin Bottom (marginBottom)
+        	- Padding Top (paddingTop)
+        	- Padding Bottom (paddingBottom)
+========================================
+#}
+{{ craft.app.config.general.devMode ? ('<!-- Template: ' ~ _self ~ ' -->') | raw }}
+{% import "_includes/macros" as render %}
+
+{% set section = entry.section.handle|default(null) %}
+{% set parent = block.parent.type.handle|default(null) %}
+{% set headingAlignment = block.textAlignment.value|default('center') %}
+{% set backgroundColor = render.color({
+    handle :  currentBgColor,
+    swatch : 'background'
+}) %}
+{% set sectionTag = parent == 'container' ? 'div' : 'section' %}
+
+{# Animation #}
+{% set contentAnimation = render.setAnimation({
+    animation: block.animation,
+    animationStyle: block.contentAnimationStyle.value|default('fade-up'),
+    animationDuration: block.contentAnimationDuration.value|default(500),
+    animationOffset: block.contentAnimationOffset.value|default(null),
+    animationEasing: block.contentAnimationEasing.value|default(null)
+}) | raw %}
+
+{% if block.buttons|length %}
+<{{ sectionTag }} class="{{ spacing.implode(' ') }} {{ backgroundColor }}">
+	<div class="container">
+		<div class="{{ 'text-' ~ headingAlignment }}">
+			<div class="post__text">
+				{% for button in block.buttons.all() %}
+    				{% set linkIcon = not button.icon.icon|length and button.buttonType.value == 'link' ? true : false %}
+    				{% if loop.first %}
+    				<div class="buttons-wrapper justify-content-{{ headingAlignment }}" {{ contentAnimation|raw }}>
+    				{% endif %}
+    				    {{ render.createButton({
+    				        button: button.button,
+    				        type: button.buttonType.value|default("button"),
+    				        class: '',
+    				        icon: button.icon,
+    				        linkIcon: linkIcon,
+    				        color: button.color.label|default("Green")
+    				    }) }}
+    				{% if loop.last %}
+    				</div>
+    				{% endif %}
+				{% endfor %}
+			</div>
+		</div>
+	</div>
+</{{ sectionTag }}>
+{% endif %}

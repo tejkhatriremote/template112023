@@ -1,0 +1,46 @@
+{% extends '_layouts/main' %}
+{% import "_includes/macros" as render %}
+
+{% block content %}
+    {{ craft.app.config.general.devMode ? ('<!-- Page: ' ~ _self ~ ' -->') | raw }}
+    <section class="hero-section">
+        {% set image = entry.image.one() %}
+        {% if image|length %}
+        <div class="hero-section__bg">
+            {% set params = {
+                image: image,
+                alt: image.title,
+                width: image.width,
+                height: image.height
+            } %}
+            {{ render.setImage(params) }}
+        </div>
+        {% endif %}
+
+        <div class="container">
+            <div class="hero-section__inner">
+                <h1 class="h1 mb-30">
+                    {{ entry.title }}
+                </h1>
+
+                {{ render.replaceElements(entry.text, {
+                    'p': 'subhead'
+                }) }}
+            </div>
+        </div>
+    </section>
+
+    {#
+    =============================================
+        Include Breadcrumb
+    =============================================
+    #}
+    {% include "_includes/breadcrumb" %}
+
+    {#
+    =============================================
+        Include pageBuilder
+    =============================================
+    #}
+    {% include "_partials/blogBuilder" %}
+{% endblock %}

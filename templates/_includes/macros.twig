@@ -1,0 +1,127 @@
+{% macro setBackgroundImage(params) %}
+	{% set defaultsParams = {
+		image: null,
+		selector: null,
+		single: false,
+		webp: true,
+	} %}
+
+	{# Override (overwrite) defaults with passed parameters #}
+	{% set options = defaultsParams|merge(params) %}
+	{% set ret %}{% include "_includes/macros/setBackgroundImage" with options %}{% endset %}
+
+	{% return ret|trim %}
+{% endmacro %}
+
+{% macro setImage(params) %}
+	{% set defaultsParams = {
+		image: null,
+		alt: null,
+		class: null,
+		id: "",
+		pictureClass: null,
+		lazy: true,
+		addSrcSet: true,
+		plainImage: null,
+		width: null,
+		height: null,
+		webp: true,
+	} %}
+
+	{# Override (overwrite) defaults with passed parameters #}
+	{% set options = defaultsParams|merge(params) %}
+	{% include "_includes/macros/setImage" with options %}
+{% endmacro %}
+
+{% macro createButton(params) %}
+	{% set defaults = {
+    	button: null,
+    	type: null,
+    	color: null,
+    	class: null,
+    	icon: null,
+    	linkIcon: false,
+    	bgColor: false,
+    } %}
+
+	{# Override (overwrite) defaults with passed parameters #}
+	{% set options = defaults|merge(params) %}
+	{% include "_includes/macros/createButton" with options %}
+{% endmacro %}
+
+{% macro color(params) %}
+	{% set defaultsParams = {
+		handle: null,
+		swatch: null,
+	} %}
+
+	{# Override (overwrite) defaults with passed parameters #}
+	{% set options = defaultsParams|merge(params) %}
+	{% set ret %}{% include "_includes/macros/color" with options %}{% endset %}
+
+	{% return ret|trim %}
+{% endmacro %}
+
+{% macro spacing(params) %}
+	{% set defaults = {
+		type: 'marginPadding',
+		first: false,
+		last: false,
+		section: null,
+		parent: null,
+
+		prev: null,
+		current: null,
+		next: null,
+
+		prevBgColor: null,
+		currentBgColor: null,
+		nextBgColor: null,
+
+		marginTop: null,
+		marginBottom: null,
+		paddingTop: null,
+		paddingBottom: null,
+
+	} %}
+
+	{# Override (overwrite) defaults with passed parameters #}
+	{% set options = defaults|merge(params) %}
+	{% set ret %}{% include "_includes/macros/spacing" with options %}{% endset %}
+	{% return ret|replace({ "\n": '' })|trim %}
+{% endmacro %}
+
+{% macro setAnimation(params) %}
+	{% set defaults = {
+		animation: null,
+		animationStyle: null,
+		animationDuration: null,
+		animationOffset: null,
+		animationEasing: null
+	} %}
+
+	{# Override (overwrite) defaults with passed parameters #}
+	{% set options = defaults|merge(params) %}
+	{% set ret %}{% include "_includes/macros/setAnimation" with options %}{% endset %}
+	{% return ret|trim %}
+{% endmacro %}
+
+{% macro replaceElements(text, default = {}) %}
+	{{ text | replace({
+		'<h1' : '<h1 class="' ~ (default['h1'] is defined ? default['h1'] : "h1") ~ '"',
+		'<h2' : '<h2 class="' ~ (default['h2'] is defined ? default['h2'] : "h2") ~ '"',
+		'<h3' : '<h3 class="' ~ (default['h3'] is defined ? default['h3'] : "h3") ~ '"',
+		'<h4' : '<h4 class="' ~ (default['h4'] is defined ? default['h4'] : "h4") ~ '"',
+		'<h5' : '<h5 class="' ~ (default['h5'] is defined ? default['h5'] : "h5") ~ '"',
+		'<h6' : '<h6 class="' ~ (default['h6'] is defined ? default['h6'] : "h6") ~ '"',
+		'<p' : '<p class="' ~ (default['p'] is defined ? default['p'] : "p") ~ '"',
+		'<ol' : '<ol class="' ~ (default['ol'] is defined ? default['ol'] : "") ~ '"',
+		'<ul' : '<ul class="' ~ (default['ul'] is defined ? default['ul'] : "") ~ '"',
+		'<li' : '<li class="' ~ (default['li'] is defined ? default['li'] : "") ~ '"',
+		'<a': '<a class="' ~ (default['a'] is defined ? default['a'] : "a") ~ '"',
+		'<span' : '<span class="' ~ (default['span'] is defined ? default['span'] : "span") ~ '"',
+		'<blockquote' : '<blockquote class="' ~ (default['blockquote'] is defined ? default['blockquote'] : "blockquote") ~ '"',
+		'<table' : '<table class="' ~ (default['table'] is defined ? default['table'] : "table") ~ '"',
+		'<strong' : '<strong class="' ~ (default['strong'] is defined ? default['strong'] : "strong") ~ '"',
+	}) | raw }}
+{% endmacro %}

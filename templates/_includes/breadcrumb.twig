@@ -1,0 +1,114 @@
+{{ craft.app.config.general.devMode ? ('<!-- Template: ' ~ _self ~ ' -->') | raw }}
+{% import "_includes/macros" as render %}
+
+{% set bgClass = null %}
+{% set spacingClass = null %}
+
+{% if entry is defined %}
+    {% set block = entry.pageBuilder.one()|default(entry.blogBuilder.one()|default(null)) %}
+    {% if block|length %}
+        {% set backgroundColor = block.backgroundColor.label|default(null) %}
+
+        {% if block.type.handle == "listing" %}
+            {% set listingBlockChild = block.children.one() %}
+            {% if listingBlockChild.type.handle == 'blogs' and listingBlockChild.showFeatured %}
+                {% set backgroundColor = "Gray" %}
+            {% endif %}
+            {% set spacingClass = 'mb-0' %}
+        {% endif %}
+
+        {% if backgroundColor|length %}
+            {% set bgClass = render.color({
+                handle :  backgroundColor,
+                swatch : 'background'
+            }) %}
+
+            {% set spacingClass = not spacingClass|length ? 'mb-0 pb-40' : spacingClass %}
+        {% endif %}
+    {% endif %}
+{% endif %}
+
+{% set section = entry.section.handle %}
+{% set crumbList = seomatic.jsonLd.get('breadcrumbList').itemListElement %}
+{% if section in ['blogs', 'meetings', 'team', 'faqs'] %}
+    {% set newBreadcrumbsObject = collect([]) %}
+    {% set cnt = 1 %}
+    {% for crumb in crumbList %}
+        {% set newBreadcrumbsObject = newBreadcrumbsObject.merge([{
+            'type': 'ListItem',
+            'position': cnt,
+            'name': crumb.name,
+            'item': crumb.item
+        }]) %}
+        {% set cnt = cnt+1 %}
+
+        {% if loop.first %}
+            {% switch section %}
+                {% case "blogs" %}
+                    {% set newBreadcrumbsObject = newBreadcrumbsObject.merge([{
+                        'type': 'ListItem',
+                        'position': cnt,
+                        'name': 'Blog',
+                        'item': siteUrl ~ "blog"
+                    }]) %}
+                    {% set cnt = cnt+1 %}
+
+                {% case "meetings" %}
+                    {% set newBreadcrumbsObject = newBreadcrumbsObject.merge([{
+                        'type': 'ListItem',
+                        'position': cnt,
+                        'name': 'Meetings',
+                        'item': siteUrl ~ "commission-meetings"
+                    }]) %}
+                    {% set cnt = cnt+1 %}
+
+                {% case "team" %}
+                    {% set newBreadcrumbsObject = newBreadcrumbsObject.merge([{
+                        'type': 'ListItem',
+                        'position': cnt,
+                        'name': 'Team',
+                        'item': siteUrl ~ "about/our-people"
+                    }]) %}
+                    {% set cnt = cnt+1 %}
+
+                {# {% case "faqs" %}
+                    {% set newBreadcrumbsObject = newBreadcrumbsObject.merge([{
+                        'type': 'ListItem',
+                        'position': cnt,
+                        'name': 'Faqs',
+                        'item': siteUrl ~ "about/our-people"
+                    }]) %}
+                    {% set cnt = cnt+1 %} #}
+
+                {% default %}
+            {% endswitch %}
+
+        {% endif %}
+    {% endfor %}
+
+    {% do seomatic.jsonLd.create({
+        'type': 'BreadcrumbList',
+        'name': 'Breadcrumbs',
+        'description': 'Breadcrumbs list',
+        'itemListElement': newBreadcrumbsObject.toArray()
+    }) %}
+    {% set crumbList = newBreadcrumbsObject %}
+{% endif %}
+
+<div class="{{ bgClass }}">
+    <nav class="container breadcrumbs" aria-label="Breadcrumbs navigation">
+        <ol class="breadcrumb {{ spacingClass }}">
+            {% for crumb in crumbList %}
+            {% if not loop.last %}
+            <li class="breadcrumb-item">
+                <a href="{{ crumb.item }}" class="breadcrumb-item text-capitalize">{{ crumb.name }}</a>
+            </li>
+            {% else %}
+            <li class="breadcrumb-item text-capitalize active">
+                {{ crumb.name }}
+            </li>
+            {% endif %}
+            {% endfor %}
+        </ol>
+    </nav>
+</div>

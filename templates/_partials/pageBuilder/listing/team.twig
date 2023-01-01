@@ -1,0 +1,111 @@
+{#
+==================================================
+    Team (team)
+    Variable:
+        - Block (Block)
+
+    Fields:
+        Content:
+        	- Related Team Members (relatedTeamMembers)
+
+        Settings:
+        	- Show Category wise Team Members? (showCategoryWiseTeamMembers)
+            - Limit (limit)
+            - Filters (filters)
+==================================================
+#}
+{{ craft.app.config.general.devMode ? ('<!-- Template: ' ~ _self ~ ' -->') | raw }}
+{% import '_includes/macros' as render %}
+
+{% set category = craft.app.request.getQueryParam("category")|default(null) %}
+{% set showCategoryWiseTeamMembers = block.showCategoryWiseTeamMembers %}
+{% set limit = block.limit|default('12') %}
+{% set pagination = block.pagination %}
+
+{% if block.relatedTeamMembers|length %}
+	{% set teams = block.relatedTeamMembers %}
+{% else %}
+	{% set teams = craft.entries.section("team") %}
+{% endif %}
+
+{% if block.filters and not showCategoryWiseTeamMembers|length %}
+<div class="events-nav mb-40">
+	{% set categories = craft.categories.group("team") %}
+	<form method="GET" action="{{ craft.app.request.absoluteUrl }}" class="col-md-5 container d-flex align-items-center team-category-filter" {{ listingAnimation|raw }}>
+		<div class="container d-flex align-items-center">
+			<label for="category" class="events-nav-title">
+				Category:
+			</label>
+
+			{% for category in categories.all() %}
+			{% if loop.first %}
+			<select name="category" id="category" class="form-select">
+				<option value="all">All</option>
+			{% endif %}
+				<option value="{{ category.slug }}">{{ category }}</option>
+			{% if loop.last %}
+			</select>
+			{% endif %}
+			{% endfor %}
+		</div>
+	</form>
+</div>
+{% endif %}
+
+{% if category|length and not showCategoryWiseTeamMembers|length %}
+	{% set category = craft.categories.group("team").slug(category).one() %}
+    {% set teams = teams.relatedTo(category).limit(limit) %}
+{% endif %}
+
+{% if showCategoryWiseTeamMembers|length %}
+	{% set showCategoryWiseTeamMembers = showCategoryWiseTeamMembers.one()|default(null) %}
+	{% set teams = teams.relatedTo(showCategoryWiseTeamMembers).limit(limit) %}
+{% endif %}
+
+{% paginate teams as pageInfo, entries %}
+
+{% for team in entries %}
+{% set image = team.image.one() %}
+{% if loop.first %}
+<div class="row {{ image|length ? 'gy-30' : 'gy-58' }} mb-50">
+	{% endif %}
+	<div class="member col-md-6 col-xl-3 team-div-filter" {{ listingAnimation|raw }}>
+		<div class="team-card">
+			{% if image|length %}
+			<div class="team-card-img">
+				{% set params = {
+					image: image,
+					alt: image.title,
+					width: image.width,
+					height: image.height
+				} %}
+				{{ render.setImage(params) }}
+			</div>
+			{% endif %}
+
+			<div class="{{ image|length ? 'team-card-body' }}">
+				<h3>
+					{{ team.title }}
+				</h3>
+
+				{% if team.organization|length or team.position|length %}
+				<span class="team-card-position">
+					{{ team.position }} {{ team.organization|length ? ', ' ~ team.organization }}
+				</span>
+				{% endif %}
+
+				{% if not team.phoneNumber.isEmpty() %}
+					<a href="{{ team.phoneNumber.getUrl() }}" class="text-secondary">{{ team.phoneNumber.getText() }}</a>
+				{% endif %}
+			</div>
+		</div>
+	</div>
+{% if loop.last %}
+</div>
+{% if pagination and pageInfo and pageInfo.totalPages|default(0) > 1 %}
+<div class="md:mt-7 mt-4 text-center" {{ listingAnimation|raw }}>
+	{% include "_includes/_pagination" %}
+</div>
+{% endif %}
+{% endif %}
+{% endfor %}

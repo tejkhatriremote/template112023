@@ -1,0 +1,157 @@
+{% requireLogin %}
+
+{% set sql = 'SELECT id, name, handle , type from fields where type LIKE "%neo%"  ORDER BY name ASC' %}
+{% set neoFields = craft.app.getDb().createCommand(sql).queryAll() %}
+{% set fieldSelected = craft.app.request.get('field') ?? neoFields[0].id %}
+
+{% set sql = "SELECT id, fieldId, fieldLayoutId, name, handle from neoblocktypes where fieldId='" ~ fieldSelected ~ "' ORDER BY name ASC" %}
+{% set neoBlocks = craft.app.getDb().createCommand(sql).queryAll() %}
+
+{% set module = craft.app.request.get('handle') ?? neoBlocks[0].handle %}
+{% set current = {} %}
+{% js %}
+	jQuery(document).ready(function($) {
+		$(document).on('change', '.field-change', function(event) {
+			event.preventDefault();
+			window.location.href = "?field=" + $(this).val();
+		});
+	});
+{% endjs %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/kognise/water.css@latest/dist/dark.min.css">
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+	<title>Neo Block Usage</title>
+	<style>
+		body { max-width: 1200px; }
+		header { text-align: center; }
+		main { display: grid; grid-template-areas: "nav table"; grid-template-columns: 20em 1fr; grid-gap: 1em; background: rgba(255,255,255,0.05); border-radius: 20px; }
+		.icon { display: inline-block; width: 1em; height: 1em; margin: 0 0.25em; background-color: rebeccapurple; border-radius: 4px; padding: 2px 4px; }
+		.icon--loop { fill: lime; }
+		nav { display: flex; flex-flow: column nowrap; align-items: stretch; justify-content: flex-start; font-size: 18px; background: rgba(255,255,255,0.05); box-shadow: inset 0 1px 10px rgba(0,0,0,0.2); padding: 10px 0 10px 10px; border-radius: 20px; }
+		nav a { color: #ddd; border-radius: 5px 0 0 5px; display: flex; flex-flow: row nowrap; align-items: center; justify-content: flex-start; padding: 0.25em 0.5em; }
+		nav a:hover { background-color: #2B3642; text-decoration: none; }
+		nav a.current { background-color: #2B3642; color: white; font-weight: bold; }
+		label { display: block; cursor: pointer; }
+		input[type=checkbox] { width: 1.25em; height: 1.25em; margin: 0; }
+	</style>
+</head>
+<body>
+	<svg style="position: absolute; width: 0; height: 0; overflow: hidden;" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+		<defs>
+			<symbol id="icon--loop" viewBox="0 0 32 32">
+				<title>Block content needs updating</title>
+				<path d="M4 10h20v6l8-8-8-8v6h-24v12h4zM28 22h-20v-6l-8 8 8 8v-6h24v-12h-4z"></path>
+			</symbol>
+		</defs>
+	</svg>
+
+	<header>
+		<h1>Neo block usage in entries</h1>
+		<h2>Blocks in the <code>{% for item in neoFields if item.id == fieldSelected %}{{ item.name }}{% endfor %}</code> Neo field</h2>
+		{% for item in neoFields %}
+			{% if loop.first %}
+			<select style="appearance: auto; margin: 0 auto;" class="field-change">
+			{% endif %}
+
+				<option value="{{ item.id }}"{{ fieldSelected == item.id ? ' selected'}}>{{ item.name }}</option>
+
+			{% if loop.last %}
+			</select>
+			{% endif %}
+		{% endfor %}
+		{# <p>The icons indicate which blocks have repetitive fields (content or button) that can be optimized.</p> #}
+		<p>Note that this tool does not differentiate between multi-site sites. It shows and links to entries from all sites like one.</p>
+	</header>
+
+	<main>
+		<nav>
+			{% for row in neoBlocks %}
+			{% set class = '' %}
+
+			{% if module == row.handle %}
+			{% set class = 'current' %}
+			{% set current = row %}
+			{% endif %}
+
+			<a href="?handle={{ row.handle }}&field={{ fieldSelected }}" class="{{ class }}">
+				{{ row.name }}
+			</a>
+			{% endfor %}
+		</nav>
+
+		{% set entries = craft
+			.entries()
+			.leftJoin('{{%neoblocks}} as neoblocks', 'neoblocks.ownerId = entries.id')
+			.andWhere({'neoblocks.typeId': current.id})
+			.andWhere({'neoblocks.deletedWithOwner': null})
+			.status(['enabled', 'disabled'])
+			.all()
+		%}
+		{# .section(['pages']) #}
+		{# .orderBy('dateUpdated DESC') #}
+
+		{# Init vars #}
+		{% set filteredEntries = [] %}
+
+		{#
+		Filter the previous array down so that an entry with the specified block
+		can only appear once.
+		#}
+
+		{% for entry in entries %}
+		{% set filteredEntry = {
+			viewLink: entry.url,
+			editLink: entry.cpEditUrl,
+			title: entry.title,
+			status: entry.status,
+			section: entry.section
+		} %}
+		{% if filteredEntry not in filteredEntries %}
+		{% set filteredEntries = filteredEntries | merge([filteredEntry]) %}
+		{% endif %}
+		{% endfor %}
+
+		{# Spit out the results #}
+		<div>
+			<table class="entries">
+				<caption>
+					<h2>{{ filteredEntries|length }} entries that use the <b>{{ current.name }}</b> block:</h2>
+					<p>
+						All links open in a new tab
+					</p>
+				</caption>
+				<thead>
+					<tr>
+						<th>#</th>
+						<th>Section</th>
+						<th>Entry Name</th>
+						<th>Status</th>
+						<th>Actions</th>
+						<th>Converted?</th>
+					</tr>
+				</thead>
+				<tbody>
+					{% for entry in filteredEntries %}
+					<tr>
+						<td>{{ loop.index }}</td>
+						<td>{{ entry.section }}</td>
+						<td>{{ entry.title }}</td>
+						<td>{{ entry.status }}</td>
+						<td>
+							<a href="{{ entry.editLink }}#tab-content" target="_blank" rel="noopener noreferrer">Edit</a>{% if entry.status == 'live' %} | <a href="{{ entry.viewLink }}" target="_blank" rel="noopener noreferrer">View</a>{% endif %}</td>
+							<td><label><input type="checkbox" name="" id=""></label>
+						</td>
+					</tr>
+					{% endfor %}
+				</tbody>
+			</table>
+		</div>
+	</main>
+</body>
+</html>

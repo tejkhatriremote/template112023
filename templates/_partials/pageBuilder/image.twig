@@ -1,0 +1,160 @@
+{#
+==================================================
+    Image (image)
+    Variable:
+        - Block (Block)
+
+    Fields:
+        Content:
+        	- Image (image)
+
+		Auxiliary:
+			- Heading (heading)
+			- Sub Heading (subHeading)
+			- Buttons (buttons) [Neo]
+                - Button (button)
+                - Icon (icon)
+                - Button Type (buttonType)
+                - Color (color)
+
+        Settings:
+        	- Overlay (overlay)
+        	- Width (width)
+            - Text Alignment (textAlignment)
+        	- Card Background Color (cardBackgroundColor)
+            - Heading Size (headingSize)
+            - Heading Border? (headingBorder)
+
+        Animation Styles:
+        	- Animation (animation)
+            - Animation Style (animationStyle)
+            - Animation Easing (animationEasing)
+            - Animation Duration (animationDuration)
+            - Animation Offset (animationOffset)
+            - Content Animation Style (contentAnimationStyle)
+            - Content Animation Easing (contentAnimationEasing)
+            - Content Animation Duration (contentAnimationDuration)
+            - Content Animation Offset (contentAnimationOffset)
+
+        Spacing:
+        	- Margin Top (marginTop)
+        	- Margin Bottom (marginBottom)
+        	- Padding Top (paddingTop)
+        	- Padding Bottom (paddingBottom)
+==================================================
+#}
+{{ craft.app.config.general.devMode ? ('<!-- Template: ' ~ _self ~ ' -->') | raw }}
+{% import '_includes/macros' as render %}
+
+{% set section = entry.section.handle|default(null) %}
+{% set headingSize = block.headingSize.value|default('h2') %}
+{% set headingAlignment = block.textAlignment.value|default('start') %}
+{% set backgroundColor = render.color({
+    handle :  block.cardBackgroundColor.label|default('Green'),
+    swatch : 'cartBackground'
+}) %}
+
+{% set width = {
+    'full'  : "w-100",
+    'container'  : "container mx-auto px-4",
+    '11/12'  : "col-11 mx-auto",
+    '10/12'  : "col-10 mx-auto",
+    '9/12'  : "col-9 mx-auto",
+    '8/12'  : "col-8 mx-auto",
+    '7/12'  : "col-7 mx-auto",
+    '6/12'  : "col-6 mx-auto",
+} %}
+
+{% set imageWidth = width[block.width.value|default('full')] %}
+{% set imageHeight = block.height.value|length ? block.height.value : '550' %}
+{% set imageClass = 'image-' ~ block.id %}
+{% set overlayImageClass = 'overlay-' ~ block.id %}
+
+{% set buttonColor = {
+    'White': 'btn-primary-light',
+    'Green': 'btn-primary-light',
+    'Blue': 'btn-secondary-light',
+    'Orange': 'btn-danger-light',
+} %}
+
+{# Animation #}
+{% set contentAnimation = render.setAnimation({
+    animation: block.animation,
+    animationStyle: block.contentAnimationStyle.value|default('fade-up'),
+    animationDuration: block.contentAnimationDuration.value|default(500),
+    animationOffset: block.contentAnimationOffset.value|default(null),
+    animationEasing: block.contentAnimationEasing.value|default(null)
+}) | raw %}
+
+{% set imageAnimation = render.setAnimation({
+    animation: block.animation,
+    animationStyle: block.animationStyle.value|default('fade-right'),
+    animationDuration: block.animationDuration.value|default(500),
+    animationOffset: block.animationOffset.value|default(null),
+    animationEasing: block.AnimationEasing.value|default(null)
+}) | raw %}
+
+<div class="position-relative {{ spacing.implode(' ') }} {{ imageWidth }} {{ section != 'pages' or section != 'home' ? 'col-lg-5 col-12 mx-auto' }}">
+	{% set image = block.image.one() %}
+	{% if image|length %}
+	<div {{ imageAnimation|raw }}>
+		{% set params = {
+			image: image,
+			alt: image.title,
+			class: 'd-block w-100 ' ~ imageClass,
+			width: image.width,
+			height: image.height
+		} %}
+		{{ render.setImage(params) }}
+	</div>
+	{% endif %}
+
+	{% if block.heading|length or block.subHeading|length or block.buttons|length %}
+	<div class="{{ overlayImageClass }} position-absolute mw-100 bottom-0 w-100">
+		<div class="middle container">
+			<div class="cta-banner-inner {{ 'text-' ~ headingAlignment }} {{ backgroundColor }}">
+				{% if block.heading|length %}
+				<h2 class="{{ block.headingBorder ? 'lined lined-white' }} {{ headingAlignment == 'center' ? 'decorated-center decorated-title' : (headingAlignment == 'end' ? 'border-right decorated-title') }} {{ backgroundColor == 'bg-white' ? 'text-black' }} {{ headingSize }}" {{ contentAnimation|raw }}>
+					{{ block.heading|nl2br }}
+				</h2>
+				{% endif %}
+
+				{% if block.subHeading|length %}
+				<p class="subhead {{ backgroundColor == 'bg-white' ? 'text-black' }}" {{ contentAnimation|raw }}>
+					{{ block.subHeading|nl2br }}
+				</p>
+				{% endif %}
+
+				<div {{ contentAnimation|raw }}>
+					{% if block.buttons|length %}
+					{% for button in block.buttons.all() %}
+					{% set color = buttonColor[block.cardBackgroundColor.label|default('Green')] %}
+					{% set linkIcon = not button.icon.icon|length and button.buttonType.value == 'link' ? true : false %}
+					{{ render.createButton({
+						button: button.button,
+						type: button.buttonType.value|default("button"),
+						class: color,
+						icon: button.icon,
+						linkIcon: linkIcon,
+						color: button.color.label|default("White")
+					}) }}
+					{% endfor %}
+					{% endif %}
+				</div>
+			</div>
+		</div>
+	</div>
+	{% endif %}
+</div>
+
+{% set overlay = ((block.overlay|default('30')) / 100) %}
+{% css %}
+	.{{ imageClass }} {
+		height: {{ imageHeight ~ 'px' }} !important;
+	}
+
+	.{{ overlayImageClass }} {
+		background: rgba(0,0,0,{{ overlay }});
+		height: {{ imageHeight ~ 'px' }} !important;
+	}
+{% endcss %}

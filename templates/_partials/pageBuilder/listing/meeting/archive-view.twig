@@ -1,0 +1,49 @@
+{% for meeting in meetings %}
+    {% if loop.first %}
+    <div class="accordion mt-40 mb-30" id="accordionPanelsStayOpenExample">
+    {% endif %}
+        {% if meeting.archive %}
+        <div class="accordion-item" {{ listingAnimation|raw }}>
+            <h3 class="accordion-header" id="panelsStayOpen-heading-{{ loop.index }}">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#panelsStayOpen-{{ loop.index }}" aria-expanded="false" aria-controls="panelsStayOpen-{{ loop.index }}">
+                    {{ meeting.title }}
+                </button>
+            </h3>
+            <div id="panelsStayOpen-{{ loop.index }}" class="accordion-collapse collapse" data-bs-parent="#accordionPanelsStayOpenExample">
+                <div class="d-flex justify-content-between mt-20">
+                    <div class="accordion-body">
+                        {% if meeting.date|length or meeting.address.address|length %}
+                            <p>
+                                {{ meeting.date|length ? meeting.date|date ~ ' | ' }}{{ meeting.date|length ? meeting.date|time }}{{ meeting.address.address|length and meeting.date|length ? ' | '}}{{ meeting.address.address }}
+                            </p>
+                        {% endif %}
+                    </div>
+                    {% set agenda = meeting.agenda.one() %}
+                    {% set minutes = meeting.minutes.one() %}
+                    {% if agenda|length or minutes|length %}
+                    <div class="meeting-buttons">
+                        {% if agenda|length %}
+                        <div class="meeting-buttons-item">
+                            <a href="{{ agenda.getUrl() }}" class="btn btn-primary agenda-link" download>
+                                Agenda <svg width="18" height="18" fill="#fff" style="margin-left: 5px;"><use xlink:href="#metting-list"></use></svg>
+                            </a>
+                        </div>
+                        {% endif %}
+
+                        {% if minutes|length %}
+                        <div class="meeting-buttons-item">
+                            <a href="{{ minutes.getUrl() }}" class="btn btn-secondary minuteLink" download>
+                                Minutes <svg width="18" height="18" fill="#fff" style="margin-bottom: 2px; margin-left: 5px;"><use xlink:href="#metting-clock"></use></svg>
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    {% if loop.last %}
+    </div>
+    {% endif %}
+{% endfor %}

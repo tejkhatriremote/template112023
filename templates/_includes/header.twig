@@ -1,0 +1,112 @@
+{#
+========================================
+    Header (header)
+
+    Variables
+        - Global (header)
+
+    Fields:
+        Header:
+            - Logo (image)
+            - Navigation (navigation)
+            - Button (button)
+========================================
+#}
+{{ craft.app.config.general.devMode ? ('<!-- Template: ' ~ _self ~ ' -->') | raw }}
+{% import "_includes/macros" as render %}
+
+{% set segment = craft.app.request.getSegment(1)|default(null) %}
+<header class="header">
+    <nav class="navbar navbar-expand-lg bg-light" aria-label="main navigation">
+        <div class="container-fluid justify-content-between px-19 px-md-14">
+            {% set image = header.image.one() %}
+            {% if image|length %}
+            <a href="{{ siteUrl() }}" class="navbar-brand" aria-label="{{ siteName }}">
+                {% if image.extension == "svg" %}
+                    {{ svg(image.getVolume().fs.path ~ "/" ~ image.getFolder().path ~ image.filename) | attr({
+                        class: "mw-100",
+                        width: 213,
+                        height: 56
+                    }) }}
+                {% else %}
+                    {{ render.setImage({
+                        image: image,
+                        alt: image.title,
+                        width: image.width,
+                        height: image.height,
+                        class: 'mw-100 h-auto'
+                    }) }}
+                {% endif %}
+            </a>
+            {% endif %}
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
+                <span></span>
+            </button>
+
+            {% set headerNavigation = craft.navigation.nodes(header.navigation).level(1).all() %}
+            {% for node in headerNavigation %}
+                {% if loop.first %}
+                <div class="collapse navbar-collapse" id="navbarNavDropdown">
+                    <ul class="align-items-center navbar-nav menubar" role="menubar" aria-label="main navigation">
+                {% endif %}
+                        {% if header.navigation|length %}
+                            {% if node.hasDescendants %}
+                            {# Navigation Level 1 #}
+                            <li role="none" class="nav-item">
+                                <a href="{{ node.url }}" class="{{ segment == node.title|lower ? 'text-orange' }} nav-link{{ node.classes|length ? ' ' ~ node.classes }}" role="menuitem" {% if node.newWindow %}target="_blank" rel="noopener"{% endif %} {% for attribute in node.customAttributes %}{{ attribute.attribute }}="{{ attribute.value }}"{% endfor %}>{{ node.title }}
+                                    <svg width="30" height="25" fill="#d95a32"><use xlink:href="#arrow-down"></use></svg>
+                                </a>
+                                <button class="submenu-opener" aria-label="About submenu opener">
+                                    <svg width="30" height="25" fill="#d95a32"><use xlink:href="#arrow-down"></use></svg>
+                                </button>
+                                <ul class="dropdown-menu" role="menu" aria-label="About">
+                                    {# Navigation Level 2 #}
+                                    {% for subnode in node.children.all() %}
+                                    <li role="none">
+                                        <a href="{{ subnode.url }}" role="menuitem" class="dropdown-item{{ subnode.classes|length ? ' ' ~ subnode.classes }}" {% for attribute in subnode.customAttributes %}{{ attribute.attribute }}="{{ attribute.value }}"{% endfor %} {% if subnode.newWindow %}target="_blank" rel="noopener"{% endif %}>
+                                            {{ subnode.title }}
+                                            {% if subnode.hasDescendants %}
+                                            <svg width="30" height="30" fill="#d95a32"><use xlink:href="#arrow-right"></use></svg>
+                                            {% endif %}
+                                        </a>
+
+                                        {% if subnode.hasDescendants %}
+                                            <button class="submenu-opener" aria-label="Facts submenu opener">
+                                                <svg width="30" height="25" fill="#d95a32"><use xlink:href="#arrow-down"></use></svg>
+                                            </button>
+                                            <ul class="dropdown-menu dropdown-submenu" role="menu" aria-label="Dropdown Level 3">
+                                                {# Navigation Level 3 #}
+                                                {% for subnodechild in subnode.children.all() %}
+                                                <li role="none">
+                                                    <a href="{{ subnodechild.url }}" role="menuitem" class="dropdown-item{{ subnodechild.classes|length ? ' ' ~ subnodechild.classes }}" {% for attribute in subnodechild.customAttributes %}{{ attribute.attribute }}="{{ attribute.value }}"{% endfor %} {% if subnodechild.newWindow %}target="_blank" rel="noopener"{% endif %}>
+                                                        {{ subnodechild.title }}
+                                                    </a>
+                                                </li>
+                                                {% endfor %}
+                                            </ul>
+                                        {% endif %}
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                            </li>
+
+                            {% else %}
+                            {# Navigation Level 1 #}
+                            <li role="none" class="nav-item">
+                                <a href="{{ node.url }}" class="{{ segment == node.title|lower ? 'text-orange' }} nav-link{{ node.classes|length ? ' ' ~ node.classes }}" role="menuitem" {% for attribute in node.customAttributes %}{{ attribute.attribute }}="{{ attribute.value }}"{% endfor %} {% if node.newWindow %}target="_blank" rel="noopener"{% endif %}>{{ node.title }}</a>
+                            </li>
+                            {% endif %}
+                        {% endif %}
+                {% if loop.last %}
+                    </ul>
+                    {% if not header.button.isEmpty() %}
+                        <a href="{{ header.button.getUrl() }}" class="btn btn-primary" {% if header.button.getTarget() %}target="_blank" rel="noopener"{% endif %}>{{ header.button.getText() }}</a>
+                    {% endif %}
+                </div>
+                {% endif %}
+            {% endfor %}
+            <span class="nav-overlay">&nbsp;</span>
+        </div>
+    </nav>
+</header>

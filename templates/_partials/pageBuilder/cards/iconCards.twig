@@ -1,0 +1,91 @@
+{{ craft.app.config.general.devMode ? ('<!-- Template: ' ~ _self ~ ' -->') | raw }}
+{% import "_includes/macros" as render %}
+
+{% set perRowLimit = block.perRowLimit.value|default('4') %}
+
+{% set limit = {
+    1  : "col-xl-7",
+    2  : "col-xl-5 mx-auto",
+    3  : "col-xl-4",
+    4  : "col-xl-3",
+} %}
+
+{% for card in block.children.all() %}
+
+{% set headingBorder = card.headingBorder %}
+{% set cardBackgroundColor = render.color({
+    handle :  card.cardBackgroundColor.label|default('None'),
+    swatch : 'cartBackground'
+}) %}
+
+{% set color = {
+	'None': {
+		'text': 'text-black',
+		'button': 'Green',
+	},
+    'White':{
+        'text': 'text-black',
+        'button': 'Green'
+    },
+    'Green':{
+        'text': 'text-white',
+        'button': 'White'
+    },
+    'Blue':{
+        'text': 'text-white',
+        'button': 'White'
+    },
+    'Orange':{
+        'text': 'text-white',
+        'button': 'White'
+    },
+} %}
+
+{% set textColor = color[card.cardBackgroundColor.label|default('None')] %}
+{% set headingBorder = card.headingBorder %}
+
+{% if loop.first %}
+<div class="row g-28">
+{% endif %}
+	<div class="col-md-6 {{ limit[perRowLimit] }}" {{ contentCardsAnimation|raw }}>
+		<div class="team-card">
+			{% set image = card.image.one() %}
+			{% if image|length %}
+			<div class="team-card-img">
+				{% set params = {
+					image: image,
+					alt: image.title,
+					class: 'card-img-top',
+					width: image.width,
+					height: image.height
+				} %}
+				{{ render.setImage(params) }}
+			</div>
+			{% endif %}
+
+			{% if card.heading|length or card.subHeading|length or not card.button.isEmpty %}
+			<div class="team-card-body py-20 text-center px-16 {{ cardBackgroundColor }}">
+				{% if card.heading|length %}
+					<h3 class="card-title {{ textColor['text'] }}">{{ card.heading|nl2br }}</h3>
+				{% endif %}
+
+				{% if card.subHeading|length %}
+					<p class="card-text {{ textColor['text'] }}">{{ card.subHeading|nl2br }}</p>
+				{% endif %}
+
+				{% if not card.button.isEmpty %}
+					{{ render.createButton ({
+					    button: card.button,
+					    type: 'link',
+					    linkIcon: true,
+					    color: textColor['button']
+					}) }}
+				{% endif %}
+			</div>
+			{% endif %}
+		</div>
+	</div>
+{% if loop.last %}
+</div>
+{% endif %}
+{% endfor %}

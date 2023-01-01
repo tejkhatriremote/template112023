@@ -1,0 +1,36 @@
+{#
+==================================================
+    Team (team)
+    Variable:
+        - Block (Block)
+
+    Fields:
+        Content:
+        	- Related Team Members (relatedTeamMembers)
+
+        Settings:
+        	- Show Category wise Team Members? (showCategoryWiseTeamMembers)
+            - Limit (limit)
+            - Filters (filters)
+==================================================
+#}
+{{ craft.app.config.general.devMode ? ('<!-- Template: ' ~ _self ~ ' -->') | raw }}
+{% import '_includes/macros' as render %}
+
+{% set limit = block.limit|default('12') %}
+{% set pagination = block.pagination %}
+{% set archive = block.archive %}
+
+{% if block.relatedMeetings|length %}
+	{% set meetings = block.relatedMeetings.limit(limit) %}
+{% else %}
+	{% set meetings = craft.entries.section("meetings").limit(limit) %}
+{% endif %}
+
+{% paginate meetings as pageInfo, meetings %}
+
+{% include "_partials/pageBuilder/listing/meeting/list-view" %}
+
+{% if archive %}
+	{% include "_partials/pageBuilder/listing/meeting/archive-view" %}
+{% endif %}

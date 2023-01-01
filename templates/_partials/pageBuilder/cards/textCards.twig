@@ -1,0 +1,51 @@
+{{ craft.app.config.general.devMode ? ('<!-- Template: ' ~ _self ~ ' -->') | raw }}
+{% import "_includes/macros" as render %}
+
+{% set perRowLimit = block.perRowLimit.value|default('4') %}
+
+{% set limit = {
+    1  : "col-xl-12",
+    2  : "col-xl-6",
+    3  : "col-xl-4",
+    4  : "col-xl-3",
+} %}
+
+{% for card in block.children.all() %}
+{% set headingBorder = card.headingBorder %}
+{% set cardBackgroundColor = render.color({
+    handle :  block.cardBackgroundColor.label|default('White'),
+    swatch : 'cartBackground'
+}) %}
+{% if loop.first %}
+<div class="row gy-28 mb-40">
+{% endif %}
+	<div class="col-sm-6 {{ limit[perRowLimit] }}" {{ contentCardsAnimation|raw }}>
+		<div class="{{ perRowLimit != '2' ? 'announcement' }}">
+			{% if card.heading|length %}
+			<div class="{{ headingBorder ? 'decorated-title' }}">
+				<h3>
+					{{ card.heading|nl2br }}
+				</h3>
+			</div>
+			{% endif %}
+
+			{% if card.subHeading|length %}
+			<p>
+				{{ card.subHeading|nl2br }}
+			</p>
+			{% endif %}
+
+			{% if not card.button.isEmpty %}
+				{{ render.createButton({
+				    button: card.button,
+				    type: 'link',
+				    linkIcon: true,
+				    color: 'Green'
+				}) }}
+			{% endif %}
+		</div>
+	</div>
+{% if loop.last %}
+</div>
+{% endif %}
+{% endfor %}

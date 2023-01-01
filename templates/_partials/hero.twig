@@ -1,0 +1,9 @@
+{{ craft.app.config.general.devMode ? ('<!-- Template: ' ~ _self ~ ' -->') | raw }}
+
+{% set hero = entry.hero.one() %}
+
+{% if hero|length %}
+	{% include "_partials/hero/" ~ hero.type.handle with {block: hero} %}
+{% else %}
+	<h1 class="visually-hidden">{{ entry.title }}</h1>
+{% endif %}

@@ -1,0 +1,148 @@
+{#
+========================================
+    Slider (slider)
+
+    Variables
+        - Block (block)
+
+    Fields:
+        Content:
+            - Slide images (images)
+            - Heading (heading)
+            - Sub Heading (subHeading)
+            - Buttons (buttons) [Neo]
+                - Button (button)
+                - Icon (icon)
+                - Button Type (buttonType)
+                - Color (color)
+
+        Animation Styles:
+            - Animation (animation)
+            - Animation Style (animationStyle)
+            - Animation Easing (animationEasing)
+            - Animation Duration (animationDuration)
+            - Animation Offset (animationOffset)
+            - Content Animation Style (contentAnimationStyle)
+            - Content Animation Easing (contentAnimationEasing)
+            - Content Animation Duration (contentAnimationDuration)
+            - Content Animation Offset (contentAnimationOffset)
+
+        Settings:
+            - Heading Size (headingSize)
+            - Text Alignment (textAlignment)
+            - Hero Height (heroHeight)
+            - Overlay (overlay)
+========================================
+#}
+{{ craft.app.config.general.devMode ? ('<!-- Template: ' ~ _self ~ ' -->') | raw }}
+{% import "_includes/macros" as render %}
+
+{% set headingSize = block.headingSize.value|default('h1') %}
+{% set headingAlignment = 'text-' ~ block.textAlignment.value|default('left') %}
+{% set heroHeight = block.heroHeight.value|default('large') %}
+{% set handSvg = block.handSvg.value|default(heroHeight == 'large' ? '2' : '1') %}
+{% set images = block.images.all() %}
+
+{# Animation #}
+{% set contentAnimation = render.setAnimation({
+    animation: block.animation,
+    animationStyle: block.contentAnimationStyle.value|default('fade-up'),
+    animationDuration: block.contentAnimationDuration.value|default(500),
+    animationOffset: block.contentAnimationOffset.value|default(null),
+    animationEasing: block.contentAnimationEasing.value|default(null)
+}) | raw %}
+
+{% set imageAnimation = render.setAnimation({
+    animation: block.animation,
+    animationStyle: block.animationStyle.value|default('none'),
+    animationDuration: block.animationDuration.value|default(500),
+    animationOffset: block.animationOffset.value|default(null),
+    animationEasing: block.AnimationEasing.value|default(null)
+}) | raw %}
+
+<section class="{{ heroHeight == 'large' ? 'hero-main' : 'hero-section' }}">
+    {% if not block.heading|length %}<h1 class="visually-hidden">{{ entry.title }}</h1>{% endif %}
+    {% for image in images %}
+        {% if loop.first %}
+        <div class="hero-main-bg swiper" {{ imageAnimation|raw }}>
+            <div class="swiper-wrapper">
+        {% endif %}
+                <div class="swiper-slide">
+                    {% set params = {
+                        image: image,
+                        alt: image.title,
+                        width: image.width,
+                        height: image.height,
+                        lazy: false
+                    } %}
+                    {{ render.setImage(params) }}
+                </div>
+        {% if loop.last %}
+            </div>
+
+            {% if images|length > 1 %}
+            <div class="hero-main-controls">
+                <div class="swiper-pagination"></div>
+                <button class="hero-main-controls-btn swiper-play"><svg width="15" height="15" fill="currentColor"><use xlink:href="#hero-play"></use></svg><span class="visually-hidden">Play slider</span></button>
+                <button class="hero-main-controls-btn swiper-pause"><svg width="15" height="18" fill="currentColor"><use xlink:href="#hero-pause"></use></svg><span class="visually-hidden">Pause slider</span></button>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+    {% endfor %}
+
+    {% if block.heading|length or block.subHeading|length or block.buttons|length %}
+        <div class="container">
+            <div class="{{ heroHeight == 'large' ? 'hero-main-inner' : 'hero-section__inner' }} {{ headingAlignment }}">
+                {% if block.heading|length %}
+                <h1 class="{{ headingSize }} {{ heroHeight == 'medium' ? 'mb-30' }} {{ headingAlignment == 'text-center' ? 'decorated-center decorated-title' : (headingAlignment == 'text-end' ? 'border-right decorated-title') }}" {{ contentAnimation|raw }}>
+                    {{ block.heading|nl2br }}
+                </h1>
+                {% endif %}
+
+                {% if block.subHeading|length %}
+                    {% set tag = heroHeight == 'large' ? 'p' : 'span' %}
+                    <{{ tag }} class="subhead{{ headingAlignment == 'text-center' or headingAlignment == 'text-end' ? ' mw-100 ' }}" {{ contentAnimation|raw }}>{{ block.subHeading|nl2br }}</{{ tag }}>
+                {% endif %}
+
+                <div {{ contentAnimation|raw }}>
+                    {% for button in block.buttons.all() %}
+                    {% set class = loop.last and not loop.first ? ' ms-10' %}
+                    {% set herocss = heroHeight == 'medium' ? ' mt-20' %}
+                    {% set linkIcon = not button.icon.icon|length and button.buttonType.value == 'link' ? true : false %}
+                    {{ render.createButton({
+                        button: button.button,
+                        type: button.buttonType.value|default("button"),
+                        class: class ~ herocss,
+                        icon: button.icon,
+                        linkIcon: linkIcon,
+                        color: button.color.label|default("Green")
+                    }) }}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</section>
+
+{# Image Overlay #}
+{% set overlay = ((block.overlay|default('50')) / 100) %}
+{% set background = handSvg == '2' ? 'url(/assets/images/hands.svg) no-repeat' : 'url(/assets/images/hand-white.svg) no-repeat' %}
+{% set width = handSvg == '2' ? '359px' : '185px' %}
+{% set height = handSvg == '2' ? '217px' : '170px' %}
+{% css %}
+    .hero-main-bg:after {
+        background: linear-gradient(90deg,rgba(0,0,0,{{ overlay }}),hsla(0,0%,52%,{{ overlay }})) !important;
+    }
+    .hero-main:after {
+        background: {{ handSvg == 'none' ? 'none' : background }} !important;
+        width: {{ width }};
+        height: {{ height }};
+    }
+
+    .hero-section:after {
+        background: {{ handSvg == 'none' ? 'none' : background }} !important;
+        width: {{ width }};
+        height: {{ height }};
+    }
+{% endcss %}

@@ -1,0 +1,30 @@
+{% extends '_layouts/main' %}
+{% import "_includes/macros" as render %}
+
+{% block content %}
+    {{ craft.app.config.general.devMode ? ('<!-- Page: ' ~ _self ~ ' -->') | raw }}
+
+    <section class="mt-64 mt-md-80 mt-lg-100 mb-64 mb-md-80 mb-lg-100">
+        <div class="container">
+            <div class="text-center col-lg-10 col-12 mx-auto">
+                <div class="post__text">
+                    <div class="decorated-title decorated-center pb-10">
+                        <h1 class="h2">
+                            404: Page Not Found
+                        </h1>
+                    </div>
+
+                    <div class="post__body blog-list">
+                        <p class="text-black">The Page You Requested Cannot Be Found. The Page You Are Looking For Might Have Been Removed, Had Its Name Changed, Or Is Temporarily Unavailable.</p>
+                    </div>
+
+                    <div class="buttons-wrapper justify-content-center mt-20">
+                        <a href="{{ siteUrl }}" class=" btn btn btn-primary">
+                            Return to Homepage
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+{% endblock %}

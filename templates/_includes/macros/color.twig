@@ -1,0 +1,16 @@
+{% set colors = {
+	'background' : {
+		'White'  : "bg-white",
+		'Gray' 	 : "bg-gray",
+	},
+	'cartBackground' : {
+		'None'   : '',
+		'White'  : 'bg-white',
+		'Green'  : 'bg-success',
+		'Blue'   : 'bg-secondary',
+		'Orange' : 'bg-danger',
+	}
+} %}
+{% if handle|length %}
+	{{ colors[swatch][handle] }}
+{% endif %}

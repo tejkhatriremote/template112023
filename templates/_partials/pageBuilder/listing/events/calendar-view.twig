@@ -1,0 +1,291 @@
+{% import '_includes/macros' as render %}
+
+{% set category = craft.app.request.getQueryParam("category")|default(null) %}
+{% set calendarMonth = block.calendarView.contains('month') %}
+{% set calendarWeek = block.calendarView.contains('week') %}
+{% set calendarDay = block.calendarView.contains('day') %}
+{% set defaultView = calendarMonth ? 'month' : (calendarWeek ? 'agendaWeek' : (calendarDay ? 'agendaDay' : 'month')) %}
+
+<div class="row justify-content-center pb-30">
+    <div class="col-lg-10">
+        {% if list or calendar %}
+        <div class="events-nav mb-40">
+            <div class="row">
+                <div class="col-md-7 col-xl-5 d-flex align-items-center mb-20 mb-md-0">
+                    <strong class="events-nav-title">
+                        View:
+                    </strong>
+                    <ul class="nav nav-pills mb-3" id="pills-tab" role="tablist">
+                        {% if list %}
+                        <li class="nav-item" role="presentation">
+                            <a href="?layout=list" class="nav-link py-10"><svg width="25" height="25" fill="#d95a32" style="font-size: 1.875rem; line-height: 1.533; margin: 0 10px 0 0;"><use xlink:href="#metting-list"></use></svg> List</a>
+                        </li>
+                        {% endif %}
+                        {% if calendar %}
+                        <li class="nav-item" role="presentation">
+                            <a href="?layout=calendar" class="nav-link active py-10"><svg width="25" height="25" fill="#fff" style="font-size: 1.875rem; line-height: 1.533; margin: 0 10px 0 0;"><use xlink:href="#event-calender"></use></svg> Calendar</a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </div>
+                {% if block.filters %}
+                {% set calendars = craft.calendar.calendars({
+                    limit: 10,
+                    order: "name",
+                    sort: "asc"
+                }) %}
+                <form method="GET" action="{{ craft.app.request.absoluteUrl }}" class="filter-form col-md-5 col-xl-7 d-flex align-items-center">
+                    {{ hiddenInput('layout', 'calendar') }}
+                    <label for="category" class="events-nav-title">
+                        Category:
+                    </label>
+                    <select name="category" id="category" class="form-select category-filter">
+                        <option value="">All</option>
+                        {% for calendar in calendars %}
+                        <option value="{{ calendar.handle }}" {% if category == calendar.handle %} selected{% endif %}>{{ calendar.name }}</option>
+                        {% endfor %}
+                    </select>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+        <div class="row">
+            <div class="col-sm-12 col-md-12">
+                <div id="calendar-wrapper"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# Register a CSS file #}
+{% css "/assets/vendor/css/fullcalendar.min.css" %}
+{% css "/assets/vendor/css/jquery.qtip.min.css" %}
+{% css "/assets/vendor/css/full-calendar.css" %}
+{% css "/assets/vendor/css/event-calendar.css" %}
+
+{# Register a JS file #}
+{% js "/assets/vendor/js/jquery.min.js" %}
+{% js "/assets/vendor/js/moment.min.js" %}
+{% js "/assets/vendor/js/fullcalendar.min.js" %}
+{% js "/assets/vendor/js/jquery-ui.min.js" %}
+{% js "/assets/vendor/js/jquery.qtip.min.js" %}
+{% js "/assets/vendor/js/jquery-migrate.min.js" %}
+{% js "/assets/vendor/js/main.js" %}
+
+{% js %}
+    var calendarTimeFormat = "{{ craft.app.locale.getTimeFormat('short', 'php') }}";
+    var qTipsEnabled = true;
+    var $calendar = $("#calendar-wrapper");
+    var canEditEvents = {{ currentUser and currentUser.can('calendar-manageEvents') ? 'true' : 'false' }};
+
+    window.csrfTokenName = '{{ craft.app.config.general.csrfTokenName }}';
+    window.csrfTokenValue = '{{ craft.app.request.csrfToken }}';
+
+    {% set defaultDate = now.format("Y-m-d") %}
+    {% set month = calendarMonth ? 'month' %}
+    {% set week = calendarWeek ? ',agendaWeek' %}
+    {% set day = calendarDay ? ',agendaDay' %}
+
+    $(function () {
+        $calendar.fullCalendar({
+            header: {
+                left: 'prev,next today',
+                center: 'title',
+                right: '{{ month }}{{ week }}{{ day }}'
+            },
+            defaultDate: "{{ defaultDate }}",
+            defaultView: "{{ defaultView }}",
+            fixedWeekCount: true,
+            firstDay: {{ craft.calendar.settings.firstDayOfWeek }},
+            eventLimit: 5,
+            aspectRatio: 1.3,
+            events: getEvents,
+            eventRender: renderEvent,
+            eventClick: eventClick,
+            eventDragStart: closeAllQTips,
+            eventDragStop: enableQTips,
+            eventResizeStart: closeAllQTips,
+            eventResizeStop: enableQTips,
+            selectable: canEditEvents,
+            selectHelper: canEditEvents
+        });
+
+        var $creator = $('#event-creator');
+        var $allDay = $('input[name=allDay]', $creator);
+        $allDay.on({
+            click: function () {
+                var $timeWrapper = $('.timewrapper', $creator);
+
+                if ($(this).is(":checked")) {
+                    $timeWrapper.fadeOut('fast');
+                } else {
+                    $timeWrapper.fadeIn('fast');
+                }
+            }
+        });
+    });
+
+    // Fetch date from json
+    function getEvents(start, end, timezone, callback) {
+        var data = {
+            rangeStart: start.toISOString(),
+            rangeEnd: end.toISOString(),
+            calendar: '{{ category }}',
+            {{ craft.app.config.general.csrfTokenName }}: '{{ craft.app.request.csrfToken }}',
+        };
+
+        $.ajax({
+            url: '{{ siteUrl }}/resources/event.json',
+            data: data,
+            type: 'post',
+            dataType: 'json',
+            success: function (eventList) {
+              // All day events have to actually go into the next day
+              // So we pad them with 2 seconds to go from 23:59:59 same day
+              // Into 00:00:01 the next day
+              for (var i = 0; i < eventList.length; i++) {
+                var event = eventList[i];
+                if (event.allDay) {
+                    eventList[i].end = moment(event.end).add(2, 's').utc().format();
+                }
+            }
+
+            callback(eventList);
+            }
+        });
+    }
+
+    function renderEvent(event, element) {
+        if (event.allDay) {
+            element.addClass('fc-event-all-day');
+        }
+
+        if (!event.end) {
+            return;
+        }
+
+        if (!event.multiDay && !event.allDay) {
+            element.addClass('fc-event-single-day');
+            var colorIcon = $('<span />')
+                    .addClass('fc-color-icon')
+                    .css('background-color', event.backgroundColor)
+                    .css('border-color', event.borderColor);
+            $('.fc-content', element).prepend(colorIcon);
+        } else {
+            element.addClass('fc-event-multi-day');
+        }
+
+        element.addClass('fc-color-' + event.textColor);
+
+        buildEventPopup(event, element);
+    }
+
+    // Event Detail page
+    function eventClick(event) {
+        var date = event.start;
+
+        var year = date.format('YYYY');
+        var month = date.format('MM');
+        var day = date.format('DD');
+
+        window.location.href = '{{ siteUrl }}calendar-demo/event/' + event.id + '/' + year + '/' + month + '/' + day;
+    }
+
+    /**
+     * Attaches a qTip2 popup on a given event
+     *
+     * @param event
+     * @param element
+     */
+    // Show Tooltip Data
+    function buildEventPopup(event, element) {
+        if (!event.calendar) {
+            return;
+        }
+
+        var qtipContent = $('<div>');
+        var calendarData = $('<div>', {
+            class: 'calendar-data',
+            html: '<span class="color-indicator" style="background-color: ' + event.backgroundColor + ';"></span> ' + event.calendar.name
+        });
+
+        var start = moment(event.start);
+        var end = moment(event.end);
+
+        var dateFormat = 'dddd, MMMM D, YYYY';
+        if (event.allDay) {
+            end.subtract(1, 'days');
+        } else {
+            var timeFormat = calendarTimeFormat == "H:i" ? "HH:mm" : "h:mma"
+            dateFormat = dateFormat + ' [at] ' + timeFormat;
+        }
+
+        var eventRange = $('<div>', {
+            class: 'event-date-range separator',
+            html: '<div style="white-space: nowrap;"><label>Starts:</label>' + start.format(dateFormat) + '</div>' +
+            '<div style="white-space: nowrap;"><label>Ends:</label>' + end.format(dateFormat) + '</div>'
+        });
+
+        var eventRepeats = '';
+        if (event.repeats) {
+            eventRepeats = $('<div>', {
+                class: 'event-repeats separator',
+                html: '',
+            });
+        }
+
+        element.qtip({
+            content: {
+                title: event.title,
+                button: true,
+                text: qtipContent
+                        .add(calendarData)
+                        .add(eventRange)
+                        .add(eventRepeats)
+            },
+            style: {
+                classes: 'qtip-bootstrap qtip-event',
+            },
+            position: {
+                my: 'top center',
+                at: 'bottom center',
+                viewport: $(window),
+                adjust: {
+                    method: 'shift flip'
+                }
+            },
+            show: {
+                solo: true,
+                delay: 500
+            },
+            hide: {
+                fixed: true,
+                delay: 300
+            },
+            events: {
+                show: function (e, api) {
+                    if (!qTipsEnabled) {
+                        e.preventDefault();
+                    }
+                },
+            }
+        });
+    }
+
+    // Close Tooltip
+    function closeAllQTips() {
+        qTipsEnabled = false;
+        $('div.qtip:visible').qtip('hide');
+    }
+
+    // Enable Tooltip
+    function enableQTips() {
+        qTipsEnabled = true;
+    }
+
+    function createDateAsUTC(date) {
+        return new Date(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), date.getUTCHours(), date.getUTCMinutes(), date.getUTCSeconds());
+    }
+
+{% endjs %}

@@ -1,0 +1,109 @@
+{% set spacing = {
+	"none" : {
+		'marginTop' : "",
+		'marginBottom' : "",
+		'paddingTop' : "",
+		'paddingBottom' : ""
+	},
+	"extraSmall" : {
+		'marginTop' : "mt-20 mt-md-32 mt-lg-40",
+		'marginBottom' : "mb-20 mb-md-32 mb-lg-40",
+		'paddingTop' : "pt-16 pt-md-32 pt-lg-40",
+		'paddingBottom' : "pb-16 pb-md-32 pb-lg-40"
+	},
+	"small" : {
+		'marginTop' : "mt-32 mt-md-48 mt-lg-58",
+		'marginBottom' : "mb-32 mb-md-48 mb-lg-58",
+		'paddingTop' : "pt-32 pt-md-48 pt-lg-58",
+		'paddingBottom' : "pb-32 pb-md-48 pb-lg-58"
+	},
+	"medium" : {
+		'marginTop' : "mt-48 mt-md-64 mt-lg-80",
+		'marginBottom' : "mb-48 mb-md-64 mb-lg-80",
+		'paddingTop' : "pt-48 pt-md-64 pt-lg-80",
+		'paddingBottom' : "pb-48 pb-md-64 pb-lg-80"
+	},
+	"large" : {
+		'marginTop' : "mt-64 mt-md-80 mt-lg-100",
+		'marginBottom' : "mb-64 mb-md-80 mb-lg-100",
+		'paddingTop' : "pt-64 pt-md-80 pt-lg-100",
+		'paddingBottom' : "pb-64 pb-md-80 pb-lg-100"
+	},
+	"extraLarge" : {
+		'marginTop' : "mt-90 mt-md-80 mt-lg-100",
+		'marginBottom' : "mb-90 mb-md-80 mb-lg-100",
+		'paddingTop' : "pt-90 pt-md-80 pt-lg-100",
+		'paddingBottom' : "pb-90 pb-md-80 pb-lg-100"
+	}
+} %}
+
+{% set space = collect([]) %}
+
+{% set defaultMarginTop = null %}
+{% set defaultMarginBottom = null %}
+{% set defaultPaddingTop = null %}
+{% set defaultPaddingBottom = null %}
+
+{% set staticSpacing = (parent == "container" ? "small" : "large") %}
+{% if currentBgColor %}
+	{% set defaultMarginTop = staticSpacing %}
+	{% set defaultPaddingTop = staticSpacing %}
+	{% set defaultMarginBottom = staticSpacing %}
+	{% set defaultPaddingBottom = staticSpacing %}
+
+	{% if prevBgColor %}
+		{% set defaultMarginTop = "none" %}
+
+		{% if prevBgColor == currentBgColor %}
+			{% set defaultPaddingTop = "small" %}
+		{% endif %}
+	{% elseif first %}
+		{% set defaultMarginTop = "none" %}
+		{% set defaultPaddingTop = "none" %}
+	{% endif %}
+
+	{% if nextBgColor %}
+		{% set defaultMarginBottom = "none" %}
+
+		{% if nextBgColor == currentBgColor %}
+			{% set defaultPaddingBottom = "small" %}
+		{% endif %}
+	{% elseif last %}
+		{% set defaultMarginBottom = "none" %}
+	{% endif %}
+{% else %}
+	{% set defaultMarginTop = staticSpacing %}
+	{% set defaultPaddingTop = "none" %}
+	{% set defaultMarginBottom = staticSpacing %}
+	{% set defaultPaddingBottom = "none" %}
+
+	{% if first %}
+		{% set defaultMarginTop = "none" %}
+
+		{% if section == 'home' %}
+			{% set defaultMarginTop = "small" %}
+		{% endif %}
+	{% endif %}
+{% endif %}
+
+{% if type in ['marginPadding', 'margin', 'marginTop'] %}
+	{{ craft.app.config.general.devMode ? ("<!--(marginTop: #{marginTop|default(defaultMarginTop)})-->") | raw }}
+	{% set space = space.merge(spacing[marginTop|default(defaultMarginTop)].marginTop) %}
+{% endif %}
+
+{% if type in ['marginPadding', 'margin', 'marginBottom'] %}
+	{{ craft.app.config.general.devMode ? ("<!--(marginBottom: #{marginBottom|default(defaultMarginBottom)})-->") | raw }}
+	{% set space = space.merge(spacing[marginBottom|default(defaultMarginBottom)].marginBottom) %}
+{% endif %}
+
+{% if type in ['marginPadding', 'padding', 'paddingTop'] %}
+	{{ craft.app.config.general.devMode ? ("<!--(paddingTop: #{paddingTop|default(defaultPaddingTop)})-->") | raw }}
+	{% set space = space.merge(spacing[paddingTop|default(defaultPaddingTop)].paddingTop) %}
+{% endif %}
+
+{% if type in ['marginPadding', 'padding', 'paddingBottom'] %}
+	{{ craft.app.config.general.devMode ? ("<!--(paddingBottom: #{paddingBottom|default(defaultPaddingBottom)})-->") | raw }}
+	{% set space = space.merge(spacing[paddingBottom|default(defaultPaddingBottom)].paddingBottom) %}
+{% endif %}
+
+ {{ space.implode(" ") }}
